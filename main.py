@@ -172,7 +172,7 @@ def load_classification_model():
     Loads and returns the classification model from the models/ folder.
     """
     clf_model = load_model(
-        "models/classifier_model1.h5",
+        "Models/classifier_model1.h5",
         custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef}
     )
     return clf_model
@@ -183,7 +183,7 @@ def load_segmentation_model():
     Loads and returns the segmentation model from the models/ folder.
     """
     seg_model = load_model(
-        "models/segmentation_model.keras",
+        "Models/segmentation_model.keras",
         custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef}
     )
     return seg_model
