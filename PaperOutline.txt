@@ -1,0 +1,14 @@
+1. model training 
+	 loading the dataset 
+	 visualizing it and preprocessing it 
+	 making sure all the fiels were in order 
+	 training the classifier 
+	mapping its results	
+	training segmentation model 
+	maping its results 
+2. deployment 
+	setting up GitHub 
+	building out the UI 
+	adding the modle with LSA or whateve the name of that GitHub extention is
+	adding the model part defining the dice and iou functions
+	finishing it and final touchups
