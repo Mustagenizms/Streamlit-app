@@ -136,7 +136,7 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 from tensorflow.keras.models import load_model
-
+@tf.keras.utils.register_keras_serializable()
 def dice_coef(y_true, y_pred, smooth=1e-6):
     """
     Dice coefficient metric: 2 * (|X ∩ Y|) / (|X| + |Y|)
@@ -148,7 +148,7 @@ def dice_coef(y_true, y_pred, smooth=1e-6):
     return (2. * intersection + smooth) / (
         tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth
     )
-
+@tf.keras.utils.register_keras_serializable()
 def iou_coef(y_true, y_pred, smooth=1e-6):
     """
     Intersection over Union metric: |X ∩ Y| / (|X ∪ Y|)
