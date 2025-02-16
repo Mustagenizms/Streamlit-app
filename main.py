@@ -169,7 +169,7 @@ def load_classification_model():
     Loads and returns the classification model from the models/ folder.
     Adjust the path and add custom_objects if needed.
     """
-    clf_model = load_model("Github\Streamlit-app\Models\classifier_model1.h5")  # or .keras
+    clf_model = load_model("Models/classifier_model1.h5")  # or .keras
     return clf_model
 
 @st.cache_resource
@@ -178,7 +178,7 @@ def load_segmentation_model():
     Loads and returns the segmentation model from the models/ folder.
     Adjust the path and add custom_objects if needed.
     """
-    seg_model = load_model("\Github\Streamlit-app\Models\segmentation_model.keras")  # or .keras
+    seg_model = load_model("Models/segmentation_model.keras")  # or .keras
     return seg_model
 
 # --------------------------
