@@ -241,88 +241,72 @@ def single_scan_app():
 # ============================
 def plot_3d_data_app():
     st.header("3D Data Plotter")
-    uploaded_zip = st.file_uploader("Upload ZIP of MRI scans (alternating MRI and corresponding mask)", type=["zip"], key="zip_uploader")
+    uploaded_zip = st.file_uploader("Upload ZIP with images in strict order: MRI0, Mask0, MRI1, Mask1, etc.", 
+                                    type=["zip"], key="zip_uploader")
     if uploaded_zip is not None:
         with zipfile.ZipFile(uploaded_zip, "r") as z:
-            # List all files (non-folder entries)
             file_list = sorted([f for f in z.namelist() if not f.endswith("/")])
+            # Must be an even number of files: [MRI0, Mask0, MRI1, Mask1, ...]
             if len(file_list) % 2 != 0:
-                st.error("Expected an even number of files (alternating MRI and mask).")
+                st.error("Expected an even number of files (MRI, mask, MRI, mask...).")
                 return
+            
             mri_images = []
             seg_images = []
-            # Files are in order: MRI, mask, MRI, mask, ...
+            
+            # Read images in the order: MRI, Mask, MRI, Mask...
             for i, fname in enumerate(file_list):
                 with z.open(fname) as f:
-                    img = Image.open(f).convert("RGB")  # Keep color
-                    arr = np.array(img)
+                    # Keep color
+                    img = Image.open(f).convert("RGB")
+                    arr = np.array(img)  # shape (H, W, 3)
+                    
+                    # If i is even -> MRI; if i is odd -> mask
                     if i % 2 == 0:
                         mri_images.append(arr)
                     else:
                         seg_images.append(arr)
+            
+            # Print out all masks first
+            st.subheader("All Masks in Order")
+            for i, mask_arr in enumerate(seg_images):
+                st.image(mask_arr, caption=f"Mask {i}", use_column_width=True)
+            
+            # Then print out all MRIs
+            st.subheader("All MRI Scans in Order")
+            for i, mri_arr in enumerate(mri_images):
+                st.image(mri_arr, caption=f"MRI {i}", use_column_width=True)
+            
             if not mri_images or not seg_images:
-                st.error("No images found in ZIP file.")
+                st.error("No images found in the ZIP.")
                 return
-            # Stack images: resulting shape (num_slices, height, width, 3)
+            
+            # Build 3D volumes in slice order. 
+            # We'll assume #slices = len(mri_images). 
+            # shape = (num_slices, H, W, 3)
             mri_volume = np.stack(mri_images, axis=0)
             seg_volume = np.stack(seg_images, axis=0)
+            
             st.write("MRI Volume shape:", mri_volume.shape)
-            st.write("Segmentation Volume shape:", seg_volume.shape)
-            # Optionally, show a few slices for debugging
-            for i in range(min(3, mri_volume.shape[0])):
-                st.image(mri_volume[i], caption=f"MRI Slice {i}", use_column_width=True)
-            # Create interactive 3D slice viewers using color slices
-            fig_mri = plot_color_slices(mri_volume, title="MRI Slices")
+            st.write("Mask Volume shape:", seg_volume.shape)
+            
+            # Convert each slice to grayscale for 3D plane slicing
+            # shape after conversion: (num_slices, H, W)
+            mri_gray_list = []
+            seg_gray_list = []
+            for i in range(mri_volume.shape[0]):
+                mri_gray_list.append(rgb_to_grayscale(mri_volume[i]))
+                seg_gray_list.append(rgb_to_grayscale(seg_volume[i]))
+            mri_gray_3d = np.stack(mri_gray_list, axis=0)  # shape (num_slices, H, W)
+            seg_gray_3d = np.stack(seg_gray_list, axis=0)  # shape (num_slices, H, W)
+            
+            # Now create the 3D slicing scene
+            fig_mri = plot_3d_slicing(mri_gray_3d, title="MRI in 3D Slicing")
             st.plotly_chart(fig_mri, use_container_width=True)
-            fig_seg = plot_color_slices(seg_volume, title="Segmentation Slices")
+            
+            fig_seg = plot_3d_slicing(seg_gray_3d, title="Mask in 3D Slicing")
             st.plotly_chart(fig_seg, use_container_width=True)
 
-def plot_color_slices(volume, title="Volume Slices"):
-    """
-    Create a Plotly figure that lets you slide through slices of a 4D volume (num_slices, height, width, 3).
-    """
-    num_slices = volume.shape[0]
-    frames = []
-    for i in range(num_slices):
-        frames.append(
-            go.Frame(
-                data=[go.Image(z=volume[i])],
-                name=str(i)
-            )
-        )
-    fig = go.Figure(
-        data=[go.Image(z=volume[0])],
-        layout=go.Layout(
-            title=title,
-            updatemenus=[{
-                "type": "buttons",
-                "showactive": False,
-                "x": 1.15,
-                "y": 1,
-                "xanchor": "right",
-                "yanchor": "top",
-                "buttons": [{
-                    "label": "Play",
-                    "method": "animate",
-                    "args": [None, {"frame": {"duration": 100, "redraw": True}, "transition": {"duration": 0}}],
-                }]
-            }],
-            sliders=[{
-                "steps": [{
-                    "method": "animate",
-                    "args": [[str(i)], {"frame": {"duration": 0, "redraw": True}, "transition": {"duration": 0}}],
-                    "label": str(i)
-                } for i in range(num_slices)],
-                "active": 0,
-                "currentvalue": {"prefix": "Slice: "},
-                "pad": {"b": 10, "t": 50},
-            }],
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, scaleanchor="x", scaleratio=1)
-        )
-    )
-    fig.frames = frames
-    return fig
 
 # ============================
 # Main App with Tabs
