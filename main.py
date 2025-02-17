@@ -2,6 +2,7 @@ import streamlit as st
 from io import BytesIO
 import plotly.graph_objects as go
 import zipfile 
+import io
 # Set the page configuration
 st.set_page_config(page_title="AI Tumor Detector", page_icon="🌍", layout="wide")
 
