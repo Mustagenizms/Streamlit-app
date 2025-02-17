@@ -279,15 +279,11 @@ def main():
             outline_option = st.selectbox("Outline Color", options=["Red", "Green"])
             alpha = st.slider("Overlay Transparency (if you want a blended overlay)", min_value=0.0, max_value=1.0, value=0.5, step=0.05)
             # Allow user to adjust segmentation threshold and outline thickness
-            thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05)
-            thickness = st.slider("Outline Thickness", min_value=1, max_value=5, value=1, step=1)
-            outline_option = st.selectbox("Outline Color", options=["Red", "Green"])
-            outline_color = (0, 0, 255) if outline_option == "Red" else (0, 255, 0)
+            thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05, key="threshold_slider")
+            thickness = st.slider("Outline Thickness", min_value=1, max_value=5, value=1, step=1, key="thickness_slider")
+            outline_option = st.selectbox("Outline Color", options=["Red", "Green"], key="outline_color_select")
 
-             # After obtaining the binary mask...
-            outline_img = overlay_outline(image, binary_mask, outline_color=outline_color, thickness=thickness)
-            st.image(outline_img, caption="Segmentation Outline Overlay", use_column_width=True)
-
+            
             # Perform segmentation
             seg_pred = seg_model.predict(img_array)
             seg_mask = seg_pred[0]  # shape (H, W, 1)
