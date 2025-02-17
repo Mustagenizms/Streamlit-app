@@ -152,126 +152,50 @@ def pil_to_bytes(img: Image.Image) -> bytes:
     img.save(buffer, format="PNG")
     return buffer.getvalue()
 
-def plot_slices(volume, title="Volume Slices"):
+def plot_color_slices(volume, title="Volume Slices"):
     """
-    Create a Plotly figure that lets you slide through slices of a 3D volume,
-    displaying each slice as a grayscale 2D image.
-    
-    volume: numpy.ndarray of shape (num_slices, height, width)
-    title: str, figure title
-    
-    Returns a Plotly Figure with frames and a slider.
+    Create a Plotly figure with a slider to view each slice of a 4D volume (num_slices, height, width, 3).
     """
-    num_slices, height, width = volume.shape
-
-    # Convert volume to float for display if needed
-    # If your data is already float32 or float64, you can skip this.
-    volume_float = volume.astype(np.float32)
-
-    # We'll compute the global min/max across the volume to set zmin/zmax
-    global_min = volume_float.min()
-    global_max = volume_float.max()
-
-    # Create frames for each slice
+    num_slices = volume.shape[0]
     frames = []
     for i in range(num_slices):
         frames.append(
             go.Frame(
-                data=[
-                    go.Image(
-                        z=volume_float[i],
-                        zmin=global_min,
-                        zmax=global_max,
-                        colorscale="Gray",
-                        colormodel="gray"
-                    )
-                ],
+                data=[go.Image(z=volume[i])],
                 name=str(i)
             )
         )
-
-    # Initial slice is the first slice (index 0)
     fig = go.Figure(
-        data=[
-            go.Image(
-                z=volume_float[0],
-                zmin=global_min,
-                zmax=global_max,
-                colorscale="Gray",
-                colormodel="gray"
-            )
-        ],
+        data=[go.Image(z=volume[0])],
         layout=go.Layout(
             title=title,
-            updatemenus=[
-                {
-                    "type": "buttons",
-                    "showactive": False,
-                    "x": 1.15,
-                    "y": 1,
-                    "xanchor": "right",
-                    "yanchor": "top",
-                    "buttons": [
-                        {
-                            "label": "Play",
-                            "method": "animate",
-                            "args": [
-                                None,
-                                {
-                                    "frame": {"duration": 100, "redraw": True},
-                                    "fromcurrent": True,
-                                    "transition": {"duration": 0},
-                                },
-                            ],
-                        }
-                    ],
-                }
-            ],
-            sliders=[
-                {
-                    "steps": [
-                        {
-                            "method": "animate",
-                            "args": [
-                                [str(i)],
-                                {
-                                    "frame": {"duration": 0, "redraw": True},
-                                    "mode": "immediate",
-                                    "transition": {"duration": 0},
-                                },
-                            ],
-                            "label": str(i),
-                        }
-                        for i in range(num_slices)
-                    ],
-                    "active": 0,
-                    "currentvalue": {
-                        "font": {"size": 12},
-                        "prefix": "Slice: ",
-                        "visible": True,
-                        "xanchor": "center",
-                    },
-                    "pad": {"b": 10, "t": 50},
-                }
-            ],
-            # Make axes look a bit cleaner
-            xaxis=dict(
-                showgrid=False,
-                zeroline=False,
-                showline=False,
-                showticklabels=False
-            ),
-            yaxis=dict(
-                showgrid=False,
-                zeroline=False,
-                showline=False,
-                showticklabels=False,
-                scaleanchor="x",  # keep aspect ratio square
-                scaleratio=1
-            ),
-        ),
+            updatemenus=[{
+                "type": "buttons",
+                "showactive": False,
+                "x": 1.15,
+                "y": 1,
+                "xanchor": "right",
+                "yanchor": "top",
+                "buttons": [{
+                    "label": "Play",
+                    "method": "animate",
+                    "args": [None, {"frame": {"duration": 100, "redraw": True}, "transition": {"duration": 0}}],
+                }]
+            }],
+            sliders=[{
+                "steps": [{
+                    "method": "animate",
+                    "args": [[str(i)], {"frame": {"duration": 0, "redraw": True}, "transition": {"duration": 0}}],
+                    "label": str(i)
+                } for i in range(num_slices)],
+                "active": 0,
+                "currentvalue": {"prefix": "Slice: "},
+                "pad": {"b": 10, "t": 50},
+            }],
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, scaleanchor="x", scaleratio=1)
+        )
     )
-
     fig.frames = frames
     return fig
 # ============================
@@ -317,50 +241,88 @@ def single_scan_app():
 # ============================
 def plot_3d_data_app():
     st.header("3D Data Plotter")
-    uploaded_zip = st.file_uploader("Upload ZIP of MRI scans (alternating MRI and segmentation images)", type=["zip"], key="zip_uploader")
+    uploaded_zip = st.file_uploader("Upload ZIP of MRI scans (alternating MRI and corresponding mask)", type=["zip"], key="zip_uploader")
     if uploaded_zip is not None:
         with zipfile.ZipFile(uploaded_zip, "r") as z:
+            # List all files (non-folder entries)
             file_list = sorted([f for f in z.namelist() if not f.endswith("/")])
             if len(file_list) % 2 != 0:
-                st.error("Expected an even number of files (alternating MRI and segmentation).")
+                st.error("Expected an even number of files (alternating MRI and mask).")
                 return
-            
             mri_images = []
             seg_images = []
-            
-            # We assume: first file is MRI slice 0, second file is seg slice 0, third file is MRI slice 1, etc.
+            # Files are in order: MRI, mask, MRI, mask, ...
             for i, fname in enumerate(file_list):
                 with z.open(fname) as f:
-                    # Convert each image to grayscale
-                    img = Image.open(f).convert("L")
+                    img = Image.open(f).convert("RGB")  # Keep color
                     arr = np.array(img)
                     if i % 2 == 0:
                         mri_images.append(arr)
                     else:
                         seg_images.append(arr)
-            
-            if len(mri_images) == 0 or len(seg_images) == 0:
+            if not mri_images or not seg_images:
                 st.error("No images found in ZIP file.")
                 return
-            
-            # Stack images along axis=0 to form (num_slices, height, width)
+            # Stack images: resulting shape (num_slices, height, width, 3)
             mri_volume = np.stack(mri_images, axis=0)
             seg_volume = np.stack(seg_images, axis=0)
-            
             st.write("MRI Volume shape:", mri_volume.shape)
-            for i in range(min(3, mri_volume.shape[0])):  # Check first 3 slices
-                st.write(f"Slice {i} shape:", mri_volume[i].shape)
-                st.image(mri_volume[i], caption=f"MRI Slice {i}", use_column_width=True)
             st.write("Segmentation Volume shape:", seg_volume.shape)
-            for i in range(min(3, seg_volume.shape[0])):  # Check first 3 slices
-                st.write(f"Slice {i} shape:", seg_volume[i].shape)
-                st.image(seg_volume[i], caption=f"Seg Slice {i}", use_column_width=True)
-            # Create slice-based figures
-            fig_mri = plot_slices(mri_volume, title="MRI Slices")
+            # Optionally, show a few slices for debugging
+            for i in range(min(3, mri_volume.shape[0])):
+                st.image(mri_volume[i], caption=f"MRI Slice {i}", use_column_width=True)
+            # Create interactive 3D slice viewers using color slices
+            fig_mri = plot_color_slices(mri_volume, title="MRI Slices")
             st.plotly_chart(fig_mri, use_container_width=True)
-            
-            fig_seg = plot_slices(seg_volume, title="Segmentation Slices")
+            fig_seg = plot_color_slices(seg_volume, title="Segmentation Slices")
             st.plotly_chart(fig_seg, use_container_width=True)
+
+def plot_color_slices(volume, title="Volume Slices"):
+    """
+    Create a Plotly figure that lets you slide through slices of a 4D volume (num_slices, height, width, 3).
+    """
+    num_slices = volume.shape[0]
+    frames = []
+    for i in range(num_slices):
+        frames.append(
+            go.Frame(
+                data=[go.Image(z=volume[i])],
+                name=str(i)
+            )
+        )
+    fig = go.Figure(
+        data=[go.Image(z=volume[0])],
+        layout=go.Layout(
+            title=title,
+            updatemenus=[{
+                "type": "buttons",
+                "showactive": False,
+                "x": 1.15,
+                "y": 1,
+                "xanchor": "right",
+                "yanchor": "top",
+                "buttons": [{
+                    "label": "Play",
+                    "method": "animate",
+                    "args": [None, {"frame": {"duration": 100, "redraw": True}, "transition": {"duration": 0}}],
+                }]
+            }],
+            sliders=[{
+                "steps": [{
+                    "method": "animate",
+                    "args": [[str(i)], {"frame": {"duration": 0, "redraw": True}, "transition": {"duration": 0}}],
+                    "label": str(i)
+                } for i in range(num_slices)],
+                "active": 0,
+                "currentvalue": {"prefix": "Slice: "},
+                "pad": {"b": 10, "t": 50},
+            }],
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, scaleanchor="x", scaleratio=1)
+        )
+    )
+    fig.frames = frames
+    return fig
 
 # ============================
 # Main App with Tabs
