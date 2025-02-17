@@ -322,8 +322,6 @@ def main():
             )
         else:
             st.warning("No Flair/Lesion detected. Segmentation skipped.")
-        st.header("3D Visualization of MRI Slices and Tumor Segmentation")
-st.write("Upload your folder’s files in order (alternating between the MRI slice and its segmentation mask, from bottom to top).")
 
 # Use accept_multiple_files to allow folder-like uploads.
 uploaded_files = st.file_uploader("Upload MRI slices and segmentation masks", type=["png", "jpg", "jpeg", "tif"], accept_multiple_files=True)
@@ -378,17 +376,6 @@ if uploaded_files:
             colorscale=[[0, 'red'], [1, 'red']],
             name='Tumor Segmentation'
         ))
-
-        fig.update_layout(
-            title="3D Visualization of MRI Scan and Segmented Tumor",
-            scene=dict(
-                xaxis_title='Width',
-                yaxis_title='Height',
-                zaxis_title='Slice'
-            )
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
 
 if __name__ == "__main__":
     main()
