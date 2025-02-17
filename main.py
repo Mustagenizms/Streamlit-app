@@ -1,78 +1,55 @@
 import streamlit as st
+import numpy as np
+from PIL import Image
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+import cv2  # OpenCV for contour extraction
 from io import BytesIO
+import zipfile
+import plotly.graph_objects as go
 
-# Set the page configuration
-st.set_page_config(page_title="AI Tumor Detector", page_icon="🌍", layout="wide")
+# --------------------------
+# Set Page Configuration
+# --------------------------
+st.set_page_config(page_title="MRI Classification, Segmentation, & 3D Visualization", page_icon="🌍", layout="wide")
 
-# Apply custom CSS for styling
+# --------------------------
+# Custom CSS for Styling
+# --------------------------
 st.markdown(
     """
     <style>
-    body {
-        background-color: #ffffff;
-        color: black;
-    }
+    body { background-color: #ffffff; color: black; }
     .sticky-header {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 20px;
-        background-color: white;
+        position: sticky; top: 0; z-index: 1000;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 20px; background-color: white;
         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     }
-    .sticky-header .logo {
-        font-size: 24px;
-        font-weight: bold;
-        color: #007bff;
-    }
-    .sticky-header .header-buttons {
-        display: flex;
-        gap: 10px;
-    }
+    .sticky-header .logo { font-size: 24px; font-weight: bold; color: #007bff; }
+    .sticky-header .header-buttons { display: flex; gap: 10px; }
     .sticky-header .header-buttons button {
-        background-color: #007bff;
-        color: white;
-        font-size: 16px;
-        padding: 8px 16px;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
+        background-color: #007bff; color: white; font-size: 16px;
+        padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
     }
-    .sticky-header .header-buttons button:hover {
-        background-color: #0056b3;
-    }
-    .main-content {
-        margin: 20px 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .main-content h1 {
-        font-size: 32px;
-        margin: 0;
-    }
+    .sticky-header .header-buttons button:hover { background-color: #0056b3; }
+    .main-content { margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
+    .main-content h1 { font-size: 32px; margin: 0; }
     .upload-button {
-        background-color: #007bff;
-        color: white;
-        font-size: 16px;
-        padding: 10px 20px;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
+        background-color: #007bff; color: white; font-size: 16px;
+        padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
     }
-    .upload-button:hover {
-        background-color: #0056b3;
-    }
+    .upload-button:hover { background-color: #0056b3; }
+    .content { background-color: #C3E5FF; }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# Sticky Header
-st.markdown(    
+# --------------------------
+# Sticky Header HTML
+# --------------------------
+st.markdown(
     """
     <div class="sticky-header">
         <div class="logo">Logo</div>
@@ -87,10 +64,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Space between header and main content
 st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
 
-# Main content
 st.markdown(
     """
     <div class="main-content">
@@ -101,60 +76,34 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Space after main content
 st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
 
-st.markdown(
-    """
-    <style>
-        .content {
-            background-color: #C3E5FF;
-        }
-        .content ul {
-            
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# next content
 st.markdown(
     """
     <div class="content">
         <ul>
             <a class="content-1"><li>About</li></a>
             <a class="content-2"><li>Contact</li></a>
-            <a class="content-3"><li>shdbf</li></a>
-            <a class="content-4"><li>srag</li></a>
+            <a class="content-3"><li>Other Info</li></a>
+            <a class="content-4"><li>More</li></a>
         </ul>
     </div>
     """,
     unsafe_allow_html=True
 )
-import streamlit as st
-import numpy as np
-from PIL import Image
-import tensorflow as tf
-from tensorflow.keras.models import load_model
+
+# ============================
+# Custom Metric Functions
+# ============================
 @tf.keras.utils.register_keras_serializable()
 def dice_coef(y_true, y_pred, smooth=1e-6):
-    """
-    Dice coefficient metric: 2 * (|X ∩ Y|) / (|X| + |Y|)
-    Measures overlap between y_true and y_pred.
-    """
     y_true_f = tf.reshape(y_true, [-1])
     y_pred_f = tf.reshape(y_pred, [-1])
     intersection = tf.reduce_sum(y_true_f * y_pred_f)
-    return (2. * intersection + smooth) / (
-        tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth
-    )
+    return (2. * intersection + smooth) / (tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth)
+
 @tf.keras.utils.register_keras_serializable()
 def iou_coef(y_true, y_pred, smooth=1e-6):
-    """
-    Intersection over Union metric: |X ∩ Y| / (|X ∪ Y|)
-    Another common overlap measure for segmentation.
-    """
     y_true_f = tf.reshape(y_true, [-1])
     y_pred_f = tf.reshape(y_pred, [-1])
     intersection = tf.reduce_sum(y_true_f * y_pred_f)
@@ -164,142 +113,68 @@ def iou_coef(y_true, y_pred, smooth=1e-6):
 tf.keras.utils.get_custom_objects()["dice_coef"] = dice_coef
 tf.keras.utils.get_custom_objects()["iou_coef"] = iou_coef
 
-# --------------------------
-# 2. Load Models
-# --------------------------
+# ============================
+# Model Loading Functions (Cached)
+# ============================
 @st.cache_resource
 def load_classification_model():
-    """
-    Loads and returns the classification model from the models/ folder.
-    """
-    clf_model = load_model(
-        "Models/classifier_model1.h5",
-        custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef}
-    )
-    return clf_model
+    return load_model("models/classifier_model1.h5", custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef})
 
 @st.cache_resource
 def load_segmentation_model():
-    """
-    Loads and returns the segmentation model from the models/ folder.
-    """
-    seg_model = load_model(
-        "Models/segmentation_model.keras",
-        custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef}
-    )
-    return seg_model
+    return load_model("models/segmentation_model.keras", custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef})
 
-# --------------------------
-# 3. Preprocessing & Helper Functions
-# --------------------------
+# ============================
+# Preprocessing & Helper Functions
+# ============================
 def preprocess_image(image: Image.Image, target_size=(256, 256)) -> np.ndarray:
-    """
-    Convert PIL image to numpy array scaled [0, 1].
-    Return shape: (1, H, W, 3) for model prediction.
-    """
     image = image.convert("RGB").resize(target_size)
     img_array = np.array(image, dtype=np.float32) / 255.0
-    img_array = np.expand_dims(img_array, axis=0)  # Batch of 1
-    return img_array
+    return np.expand_dims(img_array, axis=0)
 
 def threshold_mask(mask: np.ndarray, threshold=0.5) -> np.ndarray:
-    """
-    Convert model output probabilities to a binary mask.
-    mask shape: (H, W, 1) or (H, W)
-    """
     return (mask > threshold).astype(np.uint8)
-def get_download_link(img: Image.Image, filename: str) -> str:
-    from io import BytesIO
-    import base64
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
-    b64 = base64.b64encode(buffer.getvalue()).decode()
-    return f'<a href="data:file/png;base64,{b64}" download="{filename}">Download {filename}</a>'
-    
+
+def overlay_outline(base_img: Image.Image, mask: np.ndarray, outline_color=(0, 0, 255), thickness=1) -> Image.Image:
+    """
+    Draw the outline of the binary mask on the original image.
+    """
+    base_arr = np.array(base_img.convert("RGB"))
+    base_bgr = cv2.cvtColor(base_arr, cv2.COLOR_RGB2BGR)
+    mask_uint8 = (mask.astype(np.uint8)) * 255
+    contours, _ = cv2.findContours(mask_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(base_bgr, contours, -1, outline_color, int(round(thickness)))
+    overlay_arr = cv2.cvtColor(base_bgr, cv2.COLOR_BGR2RGB)
+    return Image.fromarray(overlay_arr)
+
 def pil_to_bytes(img: Image.Image) -> bytes:
     buffer = BytesIO()
     img.save(buffer, format="PNG")
     return buffer.getvalue()
 
-import cv2
-import numpy as np
-from PIL import Image
-
-def overlay_outline(base_img: Image.Image, mask: np.ndarray, outline_color=(0, 255, 0), thickness=2) -> Image.Image:
-    """
-    Draws only the outline of the binary mask on top of the original image.
-    
-    Parameters:
-        base_img (PIL.Image): The original MRI image.
-        mask (np.ndarray): A binary mask of shape (H, W) where 1 indicates the tumor.
-        outline_color (tuple): The color of the outline in BGR format. 
-                               For red use (0, 0, 255); for green use (0, 255, 0).
-        thickness (int): The thickness of the outline.
-        
-    Returns:
-        PIL.Image: The original image with the outline drawn over it.
-    """
-    # Convert the base image to a NumPy array (RGB)
-    base_array = np.array(base_img.convert("RGB"))
-    
-    # Convert the image to BGR (OpenCV uses BGR by default)
-    base_bgr = cv2.cvtColor(base_array, cv2.COLOR_RGB2BGR)
-    
-    # Ensure mask is uint8 and convert mask values to 0 or 255
-    mask_uint8 = (mask.astype(np.uint8)) * 255
-
-    # Find contours (external contours only)
-    contours, _ = cv2.findContours(mask_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    # Draw the contours (outline) on the BGR image
-    cv2.drawContours(base_bgr, contours, -1, outline_color, thickness)
-    
-    # Convert back to RGB
-    overlay_rgb = cv2.cvtColor(base_bgr, cv2.COLOR_BGR2RGB)
-    return Image.fromarray(overlay_rgb)
-
-# --------------------------
-# 4. Main Streamlit App
-# --------------------------
-def main():
-    st.title("MRI Classification & Segmentation")
-    st.write("Upload an MRI to classify whether it has flair, adjust segmentation threshold and outline thickness under Advanced Options, view the results side-by-side, and download the mask.")
-
-    # Load models (cached)
-    clf_model = load_classification_model()
-    seg_model = load_segmentation_model()
-
-    # File uploader
-    uploaded_file = st.file_uploader("Upload an MRI scan (png/jpg/tif)", type=["png", "jpg", "jpeg", "tif"])
+# ============================
+# Single Scan App
+# ============================
+def single_scan_app():
+    st.header("Single Scan Segmentation")
+    uploaded_file = st.file_uploader("Upload an MRI scan (png/jpg/tif)", type=["png", "jpg", "jpeg", "tif"], key="single_scan")
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
-    
-        # Preprocess image for classification
         img_array = preprocess_image(image)
-
-        # Classification
         pred = clf_model.predict(img_array)
         score = float(np.squeeze(pred).item())
         st.write(f"Classification Probability (Flair): {score:.3f}")
-
         if score > 0.5:
             st.success("Lesion/Flair Detected. Performing segmentation...")
-
-            # Advanced options inside an expander.
             with st.expander("Advanced Options", expanded=False):
                 thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05, key="seg_thresh_slider")
                 thickness_value = st.slider("Outline Thickness", min_value=1.0, max_value=2.0, value=1.0, step=0.01, key="outline_thickness_slider")
-                # Convert to integer for drawing.
                 thickness = int(round(thickness_value))
                 outline_option = st.selectbox("Outline Color", options=["Red", "Green"], key="outline_color_select")
                 outline_color = (0, 0, 255) if outline_option == "Red" else (0, 255, 0)
-
-            # Segmentation
             seg_pred = seg_model.predict(img_array)
-            seg_mask = seg_pred[0]  # shape (H, W, 1)
-            binary_mask = threshold_mask(seg_mask, threshold=thresh).squeeze()  # shape (H, W)
-            
-            # Create columns for side-by-side display
+            seg_mask = seg_pred[0]
+            binary_mask = threshold_mask(seg_mask, threshold=thresh).squeeze()
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.subheader("Original Image")
@@ -311,17 +186,67 @@ def main():
                 st.subheader("Outline Overlay")
                 outline_img = overlay_outline(image, binary_mask, outline_color=outline_color, thickness=thickness)
                 st.image(outline_img, use_column_width=True)
-            
-            # Download button for binary mask
-            mask_bytes = pil_to_bytes(Image.fromarray((binary_mask * 255).astype(np.uint8)))
-            st.download_button(
-                label="Download Segmentation Mask",
-                data=mask_bytes,
-                file_name="segmentation_mask.png",
-                mime="image/png"
-            )
+            st.download_button(label="Download Segmentation Mask", data=pil_to_bytes(Image.fromarray((binary_mask * 255).astype(np.uint8))), file_name="segmentation_mask.png", mime="image/png")
         else:
             st.warning("No Flair/Lesion detected. Segmentation skipped.")
+
+# ============================
+# 3D Data Plotter App
+# ============================
+def plot_3d_data_app():
+    st.header("3D Data Plotter")
+    uploaded_zip = st.file_uploader("Upload ZIP of MRI scans (alternating MRI and segmentation images)", type=["zip"], key="zip_uploader")
+    if uploaded_zip is not None:
+        with zipfile.ZipFile(uploaded_zip, "r") as z:
+            file_list = sorted([f for f in z.namelist() if not f.endswith("/")])
+            if len(file_list) % 2 != 0:
+                st.error("Expected an even number of files (alternating MRI and segmentation).")
+                return
+            mri_images = []
+            seg_images = []
+            for i, fname in enumerate(file_list):
+                with z.open(fname) as f:
+                    img = Image.open(f).convert("L")
+                    if i % 2 == 0:
+                        mri_images.append(np.array(img))
+                    else:
+                        seg_images.append(np.array(img))
+            if len(mri_images) == 0 or len(seg_images) == 0:
+                st.error("No images found in ZIP file.")
+                return
+            mri_volume = np.stack(mri_images, axis=0)
+            seg_volume = np.stack(seg_images, axis=0)
+            st.write("MRI Volume shape:", mri_volume.shape)
+            st.write("Segmentation Volume shape:", seg_volume.shape)
+            fig_mri = go.Figure(data=go.Volume(
+                value=mri_volume,
+                opacity=0.1,
+                surface_count=15,
+                colorscale='Gray'
+            ))
+            st.plotly_chart(fig_mri, use_container_width=True)
+            fig_seg = go.Figure(data=go.Volume(
+                value=seg_volume,
+                opacity=0.2,
+                surface_count=15,
+                colorscale='Viridis'
+            ))
+            st.plotly_chart(fig_seg, use_container_width=True)
+
+# ============================
+# Main App with Tabs
+# ============================
+def main():
+    st.title("MRI Classification, Segmentation, & 3D Visualization")
+    tab1, tab2 = st.tabs(["Single Scan", "3D Data Plotter"])
+    with tab1:
+        single_scan_app()
+    with tab2:
+        plot_3d_data_app()
+
+# Load global models once
+clf_model = load_classification_model()
+seg_model = load_segmentation_model()
 
 if __name__ == "__main__":
     main()
