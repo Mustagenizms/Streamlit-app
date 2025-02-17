@@ -348,8 +348,13 @@ def plot_3d_data_app():
             seg_volume = np.stack(seg_images, axis=0)
             
             st.write("MRI Volume shape:", mri_volume.shape)
+            for i in range(min(3, mri_volume.shape[0])):  # Check first 3 slices
+                st.write(f"Slice {i} shape:", mri_volume[i].shape)
+                st.image(mri_volume[i], caption=f"MRI Slice {i}", use_column_width=True)
             st.write("Segmentation Volume shape:", seg_volume.shape)
-            
+            for i in range(min(3, seg_volume.shape[0])):  # Check first 3 slices
+                st.write(f"Slice {i} shape:", seg_volume[i].shape)
+                st.image(seg_volume[i], caption=f"Seg Slice {i}", use_column_width=True)
             # Create slice-based figures
             fig_mri = plot_slices(mri_volume, title="MRI Slices")
             st.plotly_chart(fig_mri, use_container_width=True)
