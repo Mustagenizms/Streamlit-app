@@ -275,7 +275,7 @@ def main():
 
             # User controls for segmentation threshold, outline thickness, and color selection
             thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05, key="seg_thresh_slider")
-            thickness = st.slider("Outline Thickness", min_value=1.0, max_value=2, value=1, step=1, key="outline_thickness_slider")
+            thickness = st.slider("Outline Thickness", min_value=1, max_value=2, value=1, step=1, key="outline_thickness_slider")
             outline_option = st.selectbox("Outline Color", options=["Red", "Green"], key="outline_color_select")
             # Choose color in BGR format: red = (0, 0, 255), green = (0, 255, 0)
             outline_color = (0, 0, 255) if outline_option == "Red" else (0, 255, 0)
