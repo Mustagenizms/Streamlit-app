@@ -208,6 +208,17 @@ def threshold_mask(mask: np.ndarray, threshold=0.5) -> np.ndarray:
     """
     return (mask > threshold).astype(np.uint8)
 
+def overlay_segmentation(base_img: Image.Image, mask: np.ndarray, alpha=0.5) -> Image.Image:
+    """
+    Overlay a binary mask onto the base image with adjustable transparency.
+    """
+    base_img = base_img.convert("RGB")
+    overlay = Image.new("RGB", base_img.size, color=(255, 0, 0))  # red overlay
+    mask_img = Image.fromarray((mask * 255).astype(np.uint8)).resize(base_img.size)
+    # Blend the base image and the overlay using the mask as alpha channel
+    blended = Image.blend(base_img, overlay, alpha=alpha * np.array(mask_img).astype(np.float32)/255)
+    return blended
+
 # --------------------------
 # 4. Main Streamlit App
 # --------------------------
