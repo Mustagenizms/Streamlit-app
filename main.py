@@ -250,7 +250,7 @@ def overlay_outline(base_img: Image.Image, mask: np.ndarray, outline_color=(0, 2
 # --------------------------
 def main():
     st.title("MRI Classification & Segmentation")
-    st.write("Upload an MRI to classify whether it has flair, adjust segmentation threshold, view an outline overlay, and download the mask.")
+    st.write("Upload an MRI to classify whether it has flair, adjust segmentation threshold and outline thickness, view an outline overlay, and download the mask.")
 
     # Load models (cached)
     clf_model = load_classification_model()
@@ -259,45 +259,40 @@ def main():
     # File uploader
     uploaded_file = st.file_uploader("Upload an MRI scan (png/jpg/tif)", type=["png", "jpg", "jpeg", "tif"])
     if uploaded_file is not None:
-        # Display the uploaded MRI
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded MRI", use_column_width=True)
 
-        # Preprocess for classification
+        # Preprocess image for classification
         img_array = preprocess_image(image)
 
         # Classification
         pred = clf_model.predict(img_array)
-        score = float(np.squeeze(pred))
+        score = float(np.squeeze(pred).item())
         st.write(f"Classification Probability (Flair): {score:.3f}")
 
         if score > 0.5:
             st.success("Lesion/Flair Detected. Performing segmentation...")
-            
-            # Allow user to adjust threshold and choose outline color
-            thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05)
-            outline_option = st.selectbox("Outline Color", options=["Red", "Green"])
-            alpha = st.slider("Overlay Transparency (if you want a blended overlay)", min_value=0.0, max_value=1.0, value=0.5, step=0.05)
-            # Allow user to adjust segmentation threshold and outline thickness
-            thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05, key="threshold_slider")
-            thickness = st.slider("Outline Thickness", min_value=1, max_value=5, value=1, step=1, key="thickness_slider")
-            outline_option = st.selectbox("Outline Color", options=["Red", "Green"], key="outline_color_select")
 
-            
-            # Perform segmentation
+            # User controls for segmentation threshold, outline thickness, and color selection
+            thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05, key="seg_thresh_slider")
+            thickness = st.slider("Outline Thickness", min_value=1, max_value=5, value=1, step=1, key="outline_thickness_slider")
+            outline_option = st.selectbox("Outline Color", options=["Red", "Green"], key="outline_color_select")
+            # Choose color in BGR format: red = (0, 0, 255), green = (0, 255, 0)
+            outline_color = (0, 0, 255) if outline_option == "Red" else (0, 255, 0)
+
+            # Segmentation
             seg_pred = seg_model.predict(img_array)
             seg_mask = seg_pred[0]  # shape (H, W, 1)
             binary_mask = threshold_mask(seg_mask, threshold=thresh).squeeze()  # shape (H, W)
 
-            # Display binary mask
+            # Display the binary segmentation mask
             st.image(binary_mask * 255, caption="Binary Segmentation Mask", use_column_width=True)
 
-            # Get outline overlay; choose color in BGR: red = (0,0,255), green = (0,255,0)
-            outline_color = (0, 0, 255) if outline_option == "Red" else (0, 255, 0)
-            outline_img = overlay_outline(image, binary_mask, outline_color=outline_color, thickness=2)
+            # Create an outline overlay and display it
+            outline_img = overlay_outline(image, binary_mask, outline_color=outline_color, thickness=thickness)
             st.image(outline_img, caption="Segmentation Outline Overlay", use_column_width=True)
 
-            # Optionally, provide a download link for the binary mask
+            # Provide a download link for the binary mask
             download_link = get_download_link(Image.fromarray((binary_mask * 255).astype(np.uint8)), "segmentation_mask.png")
             st.markdown(download_link, unsafe_allow_html=True)
         else:
