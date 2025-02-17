@@ -1,6 +1,6 @@
 import streamlit as st
 from io import BytesIO
-
+import plotly.graph_objects as go
 # Set the page configuration
 st.set_page_config(page_title="AI Tumor Detector", page_icon="🌍", layout="wide")
 
@@ -322,6 +322,73 @@ def main():
             )
         else:
             st.warning("No Flair/Lesion detected. Segmentation skipped.")
+        st.header("3D Visualization of MRI Slices and Tumor Segmentation")
+st.write("Upload your folder’s files in order (alternating between the MRI slice and its segmentation mask, from bottom to top).")
+
+# Use accept_multiple_files to allow folder-like uploads.
+uploaded_files = st.file_uploader("Upload MRI slices and segmentation masks", type=["png", "jpg", "jpeg", "tif"], accept_multiple_files=True)
+
+if uploaded_files:
+    # Sort files by name (assumes filenames are ordered correctly)
+    files = sorted(uploaded_files, key=lambda f: f.name)
+    
+    # Separate slices and masks assuming alternating order:
+    mri_slices = []
+    seg_slices = []
+    for idx, file in enumerate(files):
+        img = Image.open(file)
+        # Convert to grayscale for simplicity (adjust if needed)
+        img_gray = np.array(img.convert("L"))
+        if idx % 2 == 0:
+            mri_slices.append(img_gray)
+        else:
+            # For the segmentation mask, binarize it (assuming nonzero indicates tumor)
+            seg_mask = (np.array(img.convert("L")) > 127).astype(np.uint8)
+            seg_slices.append(seg_mask)
+    
+    if len(mri_slices) == 0 or len(seg_slices) == 0:
+        st.error("Please ensure that your files include both MRI slices and corresponding segmentation masks in alternating order.")
+    else:
+        # Stack slices to form 3D volumes.
+        # Volume dimensions: (num_slices, height, width)
+        volume_mri = np.stack(mri_slices, axis=0)
+        volume_seg = np.stack(seg_slices, axis=0)
+        
+        # Create a 3D volume visualization using Plotly
+        fig = go.Figure()
+
+        # Add the MRI volume (grayscale) with lower opacity.
+        fig.add_trace(go.Volume(
+            value=volume_mri,
+            opacity=0.1,  # Adjust opacity as needed
+            isomin=50,    # Adjust threshold values based on your data
+            isomax=255,
+            surface_count=20,
+            colorscale='Gray',
+            name='MRI Volume'
+        ))
+
+        # Add the segmentation volume (binary mask) as an overlay.
+        fig.add_trace(go.Volume(
+            value=volume_seg,
+            opacity=0.3,
+            isomin=0.5,
+            isomax=1,
+            surface_count=1,
+            colorscale=[[0, 'red'], [1, 'red']],
+            name='Tumor Segmentation'
+        ))
+
+        fig.update_layout(
+            title="3D Visualization of MRI Scan and Segmented Tumor",
+            scene=dict(
+                xaxis_title='Width',
+                yaxis_title='Height',
+                zaxis_title='Slice'
+            )
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
 if __name__ == "__main__":
     main()
