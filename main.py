@@ -154,38 +154,61 @@ def pil_to_bytes(img: Image.Image) -> bytes:
 
 def plot_slices(volume, title="Volume Slices"):
     """
-    Create a Plotly figure that lets you slide through slices of a 3D volume.
+    Create a Plotly figure that lets you slide through slices of a 3D volume,
+    displaying each slice as a grayscale 2D image.
     
-    Parameters:
-      volume (numpy.ndarray): 3D array of shape (num_slices, height, width).
-      title (str): Figure title.
-      
-    Returns:
-      Plotly figure with an interactive slider.
+    volume: numpy.ndarray of shape (num_slices, height, width)
+    title: str, figure title
+    
+    Returns a Plotly Figure with frames and a slider.
     """
-    num_slices = volume.shape[0]
-    # Each slice is a 2D image of shape (height, width)
-    
+    num_slices, height, width = volume.shape
+
+    # Convert volume to float for display if needed
+    # If your data is already float32 or float64, you can skip this.
+    volume_float = volume.astype(np.float32)
+
+    # We'll compute the global min/max across the volume to set zmin/zmax
+    global_min = volume_float.min()
+    global_max = volume_float.max()
+
     # Create frames for each slice
-    frames = [
-        go.Frame(
-            data=[go.Image(z=volume[i])],
-            name=str(i)
+    frames = []
+    for i in range(num_slices):
+        frames.append(
+            go.Frame(
+                data=[
+                    go.Image(
+                        z=volume_float[i],
+                        zmin=global_min,
+                        zmax=global_max,
+                        colorscale="Gray",
+                        colormodel="gray"
+                    )
+                ],
+                name=str(i)
+            )
         )
-        for i in range(num_slices)
-    ]
-    
-    # The initial slice is the first one (index 0)
+
+    # Initial slice is the first slice (index 0)
     fig = go.Figure(
-        data=[go.Image(z=volume[0])],
+        data=[
+            go.Image(
+                z=volume_float[0],
+                zmin=global_min,
+                zmax=global_max,
+                colorscale="Gray",
+                colormodel="gray"
+            )
+        ],
         layout=go.Layout(
             title=title,
             updatemenus=[
                 {
                     "type": "buttons",
                     "showactive": False,
-                    "y": 1,
                     "x": 1.15,
+                    "y": 1,
                     "xanchor": "right",
                     "yanchor": "top",
                     "buttons": [
@@ -231,8 +254,24 @@ def plot_slices(volume, title="Volume Slices"):
                     "pad": {"b": 10, "t": 50},
                 }
             ],
-        )
+            # Make axes look a bit cleaner
+            xaxis=dict(
+                showgrid=False,
+                zeroline=False,
+                showline=False,
+                showticklabels=False
+            ),
+            yaxis=dict(
+                showgrid=False,
+                zeroline=False,
+                showline=False,
+                showticklabels=False,
+                scaleanchor="x",  # keep aspect ratio square
+                scaleratio=1
+            ),
+        ),
     )
+
     fig.frames = frames
     return fig
 # ============================
