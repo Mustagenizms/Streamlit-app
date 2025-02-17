@@ -152,37 +152,83 @@ def pil_to_bytes(img: Image.Image) -> bytes:
     img.save(buffer, format="PNG")
     return buffer.getvalue()
 
-import plotly.graph_objects as go
-
-def plot_3d_volumes(mri_volume, seg_volume):
-    # Debug prints (for now, we know the intensity ranges from your logs)
-    mri_min, mri_max = np.min(mri_volume), np.max(mri_volume)
-    seg_min, seg_max = np.min(seg_volume), np.max(seg_volume)
-    st.write("MRI Volume Intensity Range:", mri_min, mri_max)
-    st.write("Segmentation Volume Intensity Range:", seg_min, seg_max)
-
-    # MRI 3D Volume Plot with adjusted parameters
-    fig_mri = go.Figure(data=go.Volume(
-        value=mri_volume,
-        isomin=mri_min,
-        isomax=mri_max,
-        opacity=0.3,            # increased opacity for better visibility
-        surface_count=30,       # more surfaces
-        colorscale='gray'
-    ))
-    st.plotly_chart(fig_mri, use_container_width=True)
-
-    # Segmentation 3D Volume Plot with adjusted parameters
-    fig_seg = go.Figure(data=go.Volume(
-        value=seg_volume,
-        isomin=seg_min,
-        isomax=seg_max,
-        opacity=0.4,            # increased opacity
-        surface_count=30,       # more surfaces
-        colorscale='Viridis'
-    ))
-    st.plotly_chart(fig_seg, use_container_width=True)
-
+def plot_slices(volume, title="Volume Slices"):
+    """
+    Create a Plotly figure that lets you slide through slices of a 3D volume.
+    
+    Parameters:
+      volume (numpy.ndarray): 3D array of shape (num_slices, height, width)
+      title (str): Figure title.
+      
+    Returns:
+      Plotly figure with an interactive slider.
+    """
+    num_slices = volume.shape[0]
+    # Create frames for each slice
+    frames = [
+        go.Frame(data=[go.Image(z=volume[i])], name=str(i))
+        for i in range(num_slices)
+    ]
+    # Initial slice is the first one
+    fig = go.Figure(
+        data=go.Image(z=volume[0]),
+        layout=go.Layout(
+            title=title,
+            updatemenus=[
+                {
+                    "type": "buttons",
+                    "showactive": False,
+                    "y": 1,
+                    "x": 1.12,
+                    "xanchor": "right",
+                    "yanchor": "top",
+                    "buttons": [
+                        {
+                            "label": "Play",
+                            "method": "animate",
+                            "args": [
+                                None,
+                                {
+                                    "frame": {"duration": 100, "redraw": True},
+                                    "fromcurrent": True,
+                                    "transition": {"duration": 0},
+                                },
+                            ],
+                        }
+                    ],
+                }
+            ],
+            sliders=[
+                {
+                    "steps": [
+                        {
+                            "method": "animate",
+                            "args": [
+                                [str(i)],
+                                {
+                                    "frame": {"duration": 0, "redraw": True},
+                                    "mode": "immediate",
+                                    "transition": {"duration": 0},
+                                },
+                            ],
+                            "label": str(i),
+                        }
+                        for i in range(num_slices)
+                    ],
+                    "active": 0,
+                    "currentvalue": {
+                        "font": {"size": 12},
+                        "prefix": "Slice: ",
+                        "visible": True,
+                        "xanchor": "center",
+                    },
+                    "pad": {"b": 10, "t": 50},
+                }
+            ],
+        ),
+    )
+    fig.frames = frames
+    return fig
 # ============================
 # Single Scan App
 # ============================
@@ -237,6 +283,7 @@ def plot_3d_data_app():
             seg_images = []
             for i, fname in enumerate(file_list):
                 with z.open(fname) as f:
+                    # Convert each image to grayscale.
                     img = Image.open(f).convert("L")
                     if i % 2 == 0:
                         mri_images.append(np.array(img))
@@ -249,10 +296,15 @@ def plot_3d_data_app():
             seg_volume = np.stack(seg_images, axis=0)
             st.write("MRI Volume shape:", mri_volume.shape)
             st.write("Segmentation Volume shape:", seg_volume.shape)
-
-            plot_3d_volumes(mri_volume, seg_volume)
-
-
+            st.write("MRI Intensity Range:", np.min(mri_volume), np.max(mri_volume))
+            st.write("Segmentation Intensity Range:", np.min(seg_volume), np.max(seg_volume))
+            
+            # Create interactive slice plots
+            fig_mri = plot_slices(mri_volume, title="MRI Slices")
+            st.plotly_chart(fig_mri, use_container_width=True)
+            
+            fig_seg = plot_slices(seg_volume, title="Segmentation Slices")
+            st.plotly_chart(fig_seg, use_container_width=True)
 
 # ============================
 # Main App with Tabs
