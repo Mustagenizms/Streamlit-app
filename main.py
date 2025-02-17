@@ -1,4 +1,5 @@
 import streamlit as st
+from io import BytesIO
 
 # Set the page configuration
 st.set_page_config(page_title="AI Tumor Detector", page_icon="🌍", layout="wide")
