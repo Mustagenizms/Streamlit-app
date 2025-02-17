@@ -250,7 +250,7 @@ def overlay_outline(base_img: Image.Image, mask: np.ndarray, outline_color=(0, 2
 # --------------------------
 def main():
     st.title("MRI Classification & Segmentation")
-    st.write("Upload an MRI to classify whether it has flair, adjust segmentation threshold and outline thickness, view an outline overlay, and download the mask.")
+    st.write("Upload an MRI to classify whether it has flair, adjust segmentation threshold and outline thickness under Advanced Options, view the results side-by-side, and download the mask.")
 
     # Load models (cached)
     clf_model = load_classification_model()
@@ -273,26 +273,34 @@ def main():
         if score > 0.5:
             st.success("Lesion/Flair Detected. Performing segmentation...")
 
-            # User controls for segmentation threshold, outline thickness, and color selection
-            thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05, key="seg_thresh_slider")
-            thickness = st.slider("Outline Thickness", min_value=1, max_value=2, value=1, step=1, key="outline_thickness_slider")
-            outline_option = st.selectbox("Outline Color", options=["Red", "Green"], key="outline_color_select")
-            # Choose color in BGR format: red = (0, 0, 255), green = (0, 255, 0)
-            outline_color = (0, 0, 255) if outline_option == "Red" else (0, 255, 0)
+            # Advanced options inside an expander.
+            with st.expander("Advanced Options", expanded=False):
+                thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05, key="seg_thresh_slider")
+                thickness_value = st.slider("Outline Thickness", min_value=1.0, max_value=2.0, value=1.0, step=0.01, key="outline_thickness_slider")
+                # Convert to integer for drawing.
+                thickness = int(round(thickness_value))
+                outline_option = st.selectbox("Outline Color", options=["Red", "Green"], key="outline_color_select")
+                outline_color = (0, 0, 255) if outline_option == "Red" else (0, 255, 0)
 
             # Segmentation
             seg_pred = seg_model.predict(img_array)
             seg_mask = seg_pred[0]  # shape (H, W, 1)
             binary_mask = threshold_mask(seg_mask, threshold=thresh).squeeze()  # shape (H, W)
-
-            # Display the binary segmentation mask
-            st.image(binary_mask * 255, caption="Binary Segmentation Mask", use_column_width=True)
-
-            # Create an outline overlay and display it
-            outline_img = overlay_outline(image, binary_mask, outline_color=outline_color, thickness=thickness)
-            st.image(outline_img, caption="Segmentation Outline Overlay", use_column_width=True)
-
-            # Provide a download link for the binary mask
+            
+            # Create columns for side-by-side display
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.subheader("Original Image")
+                st.image(image, use_column_width=True)
+            with col2:
+                st.subheader("Binary Mask")
+                st.image(binary_mask * 255, use_column_width=True)
+            with col3:
+                st.subheader("Outline Overlay")
+                outline_img = overlay_outline(image, binary_mask, outline_color=outline_color, thickness=thickness)
+                st.image(outline_img, use_column_width=True)
+            
+            # Download button for binary mask
             download_link = get_download_link(Image.fromarray((binary_mask * 255).astype(np.uint8)), "segmentation_mask.png")
             st.markdown(download_link, unsafe_allow_html=True)
         else:
