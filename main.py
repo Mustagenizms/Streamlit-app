@@ -152,36 +152,63 @@ def pil_to_bytes(img: Image.Image) -> bytes:
     img.save(buffer, format="PNG")
     return buffer.getvalue()
 
-def plot_slices(volume, title="Volume Slices"):
+def plot_3d_slicing(volume, title="MRI Volume"):
     """
-    Create a Plotly figure that lets you slide through slices of a 3D volume.
+    Create a 3D figure where each frame corresponds to a different z-slice
+    of the given 3D volume. A slider lets you move the slicing plane.
     
-    Parameters:
-      volume (numpy.ndarray): 3D array of shape (num_slices, height, width)
-      title (str): Figure title.
-      
-    Returns:
-      Plotly figure with an interactive slider.
+    volume: np.ndarray of shape (num_slices, height, width)
+    title: str for figure title
     """
-    num_slices = volume.shape[0]
-    # Create frames for each slice
-    frames = [
-        go.Frame(data=[go.Image(z=volume[i])], name=str(i))
-        for i in range(num_slices)
-    ]
-    # Initial slice is the first one
+    num_slices, height, width = volume.shape
+    
+    # Generate x,y grids for a single slice.
+    # Here we let x range [0, width], y range [0, height], z = slice_idx
+    x = np.linspace(0, width, width)
+    y = np.linspace(0, height, height)
+    X, Y = np.meshgrid(x, y)  # shape (height, width)
+    
+    # The initial plane (for slice 0) is at z=0
+    Z_init = np.zeros_like(X)
+    surfacecolor_init = volume[0]  # shape (height, width)
+    
+    # Build frames: each frame is one slice, at z=slice_idx
+    frames = []
+    for slice_idx in range(num_slices):
+        Z_plane = slice_idx * np.ones_like(X)
+        slice_data = volume[slice_idx]
+        
+        frames.append(go.Frame(
+            data=[go.Surface(
+                x=X, y=Y, z=Z_plane,
+                surfacecolor=slice_data,
+                colorscale="Gray",
+                cmin=np.min(volume),
+                cmax=np.max(volume)
+            )],
+            name=str(slice_idx)
+        ))
+    
+    # Create initial figure with the first slice
     fig = go.Figure(
-        data=go.Image(z=volume[0]),
+        data=[go.Surface(
+            x=X, y=Y, z=Z_init,
+            surfacecolor=surfacecolor_init,
+            colorscale="Gray",
+            cmin=np.min(volume),
+            cmax=np.max(volume)
+        )],
         layout=go.Layout(
             title=title,
+            scene=dict(
+                xaxis_title="X",
+                yaxis_title="Y",
+                zaxis_title="Z",
+                aspectmode="cube",   # keeps the aspect ratio
+            ),
             updatemenus=[
                 {
                     "type": "buttons",
-                    "showactive": False,
-                    "y": 1,
-                    "x": 1.12,
-                    "xanchor": "right",
-                    "yanchor": "top",
                     "buttons": [
                         {
                             "label": "Play",
@@ -196,6 +223,11 @@ def plot_slices(volume, title="Volume Slices"):
                             ],
                         }
                     ],
+                    "showactive": False,
+                    "x": 0.05,
+                    "y": 0,
+                    "xanchor": "left",
+                    "yanchor": "top"
                 }
             ],
             sliders=[
@@ -204,29 +236,31 @@ def plot_slices(volume, title="Volume Slices"):
                         {
                             "method": "animate",
                             "args": [
-                                [str(i)],
+                                [str(slice_idx)],
                                 {
                                     "frame": {"duration": 0, "redraw": True},
                                     "mode": "immediate",
                                     "transition": {"duration": 0},
                                 },
                             ],
-                            "label": str(i),
+                            "label": str(slice_idx),
                         }
-                        for i in range(num_slices)
+                        for slice_idx in range(num_slices)
                     ],
-                    "active": 0,
                     "currentvalue": {
-                        "font": {"size": 12},
                         "prefix": "Slice: ",
                         "visible": True,
-                        "xanchor": "center",
+                        "xanchor": "center"
                     },
                     "pad": {"b": 10, "t": 50},
+                    "x": 0.05,
+                    "y": 0,
                 }
             ],
-        ),
+        )
     )
+    
+    # Assign frames
     fig.frames = frames
     return fig
 # ============================
