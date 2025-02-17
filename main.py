@@ -241,7 +241,7 @@ def main():
 
         # Classification
         pred = clf_model.predict(img_array)
-        score = float(pred[0][0])
+        score = float(np.squeeze(pred))
         st.write(f"Classification Probability (Flair): {score:.3f}")
 
         if score > 0.5:
