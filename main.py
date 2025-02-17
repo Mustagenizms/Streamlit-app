@@ -208,23 +208,49 @@ def threshold_mask(mask: np.ndarray, threshold=0.5) -> np.ndarray:
     """
     return (mask > threshold).astype(np.uint8)
 
-def overlay_segmentation(base_img: Image.Image, mask: np.ndarray, alpha=0.5) -> Image.Image:
+import cv2
+import numpy as np
+from PIL import Image
+
+def overlay_outline(base_img: Image.Image, mask: np.ndarray, outline_color=(0, 255, 0), thickness=2) -> Image.Image:
     """
-    Overlay a binary mask onto the base image with adjustable transparency.
+    Draws only the outline of the binary mask on top of the original image.
+    
+    Parameters:
+        base_img (PIL.Image): The original MRI image.
+        mask (np.ndarray): A binary mask of shape (H, W) where 1 indicates the tumor.
+        outline_color (tuple): The color of the outline in BGR format. 
+                               For red use (0, 0, 255); for green use (0, 255, 0).
+        thickness (int): The thickness of the outline.
+        
+    Returns:
+        PIL.Image: The original image with the outline drawn over it.
     """
-    base_img = base_img.convert("RGB")
-    overlay = Image.new("RGB", base_img.size, color=(255, 0, 0))  # red overlay
-    mask_img = Image.fromarray((mask * 255).astype(np.uint8)).resize(base_img.size)
-    # Blend the base image and the overlay using the mask as alpha channel
-    blended = Image.blend(base_img, overlay, alpha=alpha * np.array(mask_img).astype(np.float32)/255)
-    return blended
+    # Convert the base image to a NumPy array (RGB)
+    base_array = np.array(base_img.convert("RGB"))
+    
+    # Convert the image to BGR (OpenCV uses BGR by default)
+    base_bgr = cv2.cvtColor(base_array, cv2.COLOR_RGB2BGR)
+    
+    # Ensure mask is uint8 and convert mask values to 0 or 255
+    mask_uint8 = (mask.astype(np.uint8)) * 255
+
+    # Find contours (external contours only)
+    contours, _ = cv2.findContours(mask_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Draw the contours (outline) on the BGR image
+    cv2.drawContours(base_bgr, contours, -1, outline_color, thickness)
+    
+    # Convert back to RGB
+    overlay_rgb = cv2.cvtColor(base_bgr, cv2.COLOR_BGR2RGB)
+    return Image.fromarray(overlay_rgb)
 
 # --------------------------
 # 4. Main Streamlit App
 # --------------------------
 def main():
     st.title("MRI Classification & Segmentation")
-    st.write("Upload an MRI to classify whether it has flair, adjust segmentation threshold, view an overlay, and download the mask.")
+    st.write("Upload an MRI to classify whether it has flair, adjust segmentation threshold, view an outline overlay, and download the mask.")
 
     # Load models (cached)
     clf_model = load_classification_model()
@@ -233,46 +259,40 @@ def main():
     # File uploader
     uploaded_file = st.file_uploader("Upload an MRI scan (png/jpg/tif)", type=["png", "jpg", "jpeg", "tif"])
     if uploaded_file is not None:
+        # Display the uploaded MRI
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded MRI", use_column_width=True)
 
         # Preprocess for classification
         img_array = preprocess_image(image)
 
-        # Testing for bugs
-        pred = clf_model.predict(img_array)
-        st.write("Prediction shape:", pred.shape)
-        squeezed = np.squeeze(pred)
-        st.write("Squeezed shape:", squeezed.shape)
-
-        # Use .item() to extract the Python scalar from the NumPy scalar
-        score = squeezed.item()
-        st.write("Score:", score)
-
         # Classification
         pred = clf_model.predict(img_array)
-        score = float(np.squeeze(pred[0][0]))
+        score = float(np.squeeze(pred))
         st.write(f"Classification Probability (Flair): {score:.3f}")
 
         if score > 0.5:
             st.success("Lesion/Flair Detected. Performing segmentation...")
-
-            # Allow user to adjust threshold and overlay transparency
+            
+            # Allow user to adjust threshold and choose outline color
             thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05)
-            alpha = st.slider("Overlay Transparency", min_value=0.0, max_value=1.0, value=0.5, step=0.05)
+            outline_option = st.selectbox("Outline Color", options=["Red", "Green"])
+            alpha = st.slider("Overlay Transparency (if you want a blended overlay)", min_value=0.0, max_value=1.0, value=0.5, step=0.05)
 
+            # Perform segmentation
             seg_pred = seg_model.predict(img_array)
-            seg_mask = seg_pred[0]  # (H, W, 1)
-            binary_mask = threshold_mask(seg_mask, threshold=thresh).squeeze()  # (H, W)
+            seg_mask = seg_pred[0]  # shape (H, W, 1)
+            binary_mask = threshold_mask(seg_mask, threshold=thresh).squeeze()  # shape (H, W)
 
-            # Display the binary mask
-            st.image(binary_mask * 255, caption="Predicted Binary Mask", use_column_width=True)
+            # Display binary mask
+            st.image(binary_mask * 255, caption="Binary Segmentation Mask", use_column_width=True)
 
-            # Create and display an overlay
-            overlay_img = overlay_segmentation(image, binary_mask, alpha=alpha)
-            st.image(overlay_img, caption="Overlay of Segmentation on Original Image", use_column_width=True)
+            # Get outline overlay; choose color in BGR: red = (0,0,255), green = (0,255,0)
+            outline_color = (0, 0, 255) if outline_option == "Red" else (0, 255, 0)
+            outline_img = overlay_outline(image, binary_mask, outline_color=outline_color, thickness=2)
+            st.image(outline_img, caption="Segmentation Outline Overlay", use_column_width=True)
 
-            # Provide a download link for the mask
+            # Optionally, provide a download link for the binary mask
             download_link = get_download_link(Image.fromarray((binary_mask * 255).astype(np.uint8)), "segmentation_mask.png")
             st.markdown(download_link, unsafe_allow_html=True)
         else:
