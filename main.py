@@ -214,7 +214,11 @@ def get_download_link(img: Image.Image, filename: str) -> str:
     img.save(buffer, format="PNG")
     b64 = base64.b64encode(buffer.getvalue()).decode()
     return f'<a href="data:file/png;base64,{b64}" download="{filename}">Download {filename}</a>'
-
+    
+def pil_to_bytes(img: Image.Image) -> bytes:
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    return buffer.getvalue()
 
 import cv2
 import numpy as np
