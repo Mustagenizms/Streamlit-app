@@ -213,50 +213,47 @@ def threshold_mask(mask: np.ndarray, threshold=0.5) -> np.ndarray:
 # --------------------------
 def main():
     st.title("MRI Classification & Segmentation")
-    st.write("Upload an MRI to classify whether it has flair, and if so, segment it.")
+    st.write("Upload an MRI to classify whether it has flair, adjust segmentation threshold, view an overlay, and download the mask.")
 
-    # Load models (cached for performance)
+    # Load models (cached)
     clf_model = load_classification_model()
     seg_model = load_segmentation_model()
 
-    # --------------------------
-    # File Uploader
-    # --------------------------
+    # File uploader
     uploaded_file = st.file_uploader("Upload an MRI scan (png/jpg/tif)", type=["png", "jpg", "jpeg", "tif"])
     if uploaded_file is not None:
-        # Display the uploaded MRI
         image = Image.open(uploaded_file)
         st.image(image, caption="Uploaded MRI", use_column_width=True)
 
         # Preprocess for classification
-        img_array = preprocess_image(image)  # shape (1, H, W, 3)
+        img_array = preprocess_image(image)
 
-        # --------------------------
         # Classification
-        # --------------------------
         pred = clf_model.predict(img_array)
-        # Assume pred is shape (1,1) with a sigmoid output
-        score = float(pred[0][0])  # Probability
+        score = float(pred[0][0])
         st.write(f"Classification Probability (Flair): {score:.3f}")
 
-        # --------------------------
-        # If Positive → Segmentation
-        # --------------------------
         if score > 0.5:
             st.success("Lesion/Flair Detected. Performing segmentation...")
-            seg_pred = seg_model.predict(img_array)  # shape (1, H, W, 1)
-            seg_mask = seg_pred[0]  # shape (H, W, 1)
-            
-            # Threshold to get binary mask
-            binary_mask = threshold_mask(seg_mask, threshold=0.5).squeeze()  # shape (H, W)
 
-            # Display or overlay the mask
-            st.write("Segmentation Mask:")
-            st.image(binary_mask * 255, caption="Predicted Mask", use_column_width=True)
+            # Allow user to adjust threshold and overlay transparency
+            thresh = st.slider("Segmentation Threshold", min_value=0.0, max_value=1.0, value=0.5, step=0.05)
+            alpha = st.slider("Overlay Transparency", min_value=0.0, max_value=1.0, value=0.5, step=0.05)
 
-            # Potentially you could overlay it on the original image
-            # Or provide a download button, etc.
+            seg_pred = seg_model.predict(img_array)
+            seg_mask = seg_pred[0]  # (H, W, 1)
+            binary_mask = threshold_mask(seg_mask, threshold=thresh).squeeze()  # (H, W)
 
+            # Display the binary mask
+            st.image(binary_mask * 255, caption="Predicted Binary Mask", use_column_width=True)
+
+            # Create and display an overlay
+            overlay_img = overlay_segmentation(image, binary_mask, alpha=alpha)
+            st.image(overlay_img, caption="Overlay of Segmentation on Original Image", use_column_width=True)
+
+            # Provide a download link for the mask
+            download_link = get_download_link(Image.fromarray((binary_mask * 255).astype(np.uint8)), "segmentation_mask.png")
+            st.markdown(download_link, unsafe_allow_html=True)
         else:
             st.warning("No Flair/Lesion detected. Segmentation skipped.")
 
