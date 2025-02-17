@@ -239,6 +239,14 @@ def main():
         # Preprocess for classification
         img_array = preprocess_image(image)
 
+        # Testing for bugs
+        pred = clf_model.predict(img_array)
+        st.write("Prediction shape:", pred.shape)
+        squeezed = np.squeeze(pred)
+        st.write("Squeezed shape:", squeezed.shape)
+        score = float(squeezed[0])
+        st.write("Score:", score)
+
         # Classification
         pred = clf_model.predict(img_array)
         score = float(np.squeeze(pred[0][0]))
