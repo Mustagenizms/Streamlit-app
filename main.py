@@ -118,11 +118,11 @@ tf.keras.utils.get_custom_objects()["iou_coef"] = iou_coef
 # ============================
 @st.cache_resource
 def load_classification_model():
-    return load_model("models/classifier_model1.h5", custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef})
+    return load_model("Models/classifier_model1.h5", custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef})
 
 @st.cache_resource
 def load_segmentation_model():
-    return load_model("models/segmentation_model.keras", custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef})
+    return load_model("Models/segmentation_model.keras", custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef})
 
 # ============================
 # Preprocessing & Helper Functions
