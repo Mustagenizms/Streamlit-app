@@ -308,8 +308,13 @@ def main():
                 st.image(outline_img, use_column_width=True)
             
             # Download button for binary mask
-            download_link = get_download_link(Image.fromarray((binary_mask * 255).astype(np.uint8)), "segmentation_mask.png")
-            st.markdown(download_link, unsafe_allow_html=True)
+            mask_bytes = pil_to_bytes(Image.fromarray((binary_mask * 255).astype(np.uint8)))
+            st.download_button(
+                label="Download Segmentation Mask",
+                data=mask_bytes,
+                file_name="segmentation_mask.png",
+                mime="image/png"
+            )
         else:
             st.warning("No Flair/Lesion detected. Segmentation skipped.")
 
