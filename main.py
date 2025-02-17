@@ -207,6 +207,14 @@ def threshold_mask(mask: np.ndarray, threshold=0.5) -> np.ndarray:
     mask shape: (H, W, 1) or (H, W)
     """
     return (mask > threshold).astype(np.uint8)
+def get_download_link(img: Image.Image, filename: str) -> str:
+    from io import BytesIO
+    import base64
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    b64 = base64.b64encode(buffer.getvalue()).decode()
+    return f'<a href="data:file/png;base64,{b64}" download="{filename}">Download {filename}</a>'
+
 
 import cv2
 import numpy as np
@@ -260,8 +268,7 @@ def main():
     uploaded_file = st.file_uploader("Upload an MRI scan (png/jpg/tif)", type=["png", "jpg", "jpeg", "tif"])
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded MRI", use_column_width=True)
-
+    
         # Preprocess image for classification
         img_array = preprocess_image(image)
 
