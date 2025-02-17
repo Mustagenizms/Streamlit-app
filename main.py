@@ -206,7 +206,6 @@ def plot_3d_data_app():
             seg_images = []
             for i, fname in enumerate(file_list):
                 with z.open(fname) as f:
-                    # Convert each image to grayscale
                     img = Image.open(f).convert("L")
                     if i % 2 == 0:
                         mri_images.append(np.array(img))
@@ -215,36 +214,28 @@ def plot_3d_data_app():
             if len(mri_images) == 0 or len(seg_images) == 0:
                 st.error("No images found in ZIP file.")
                 return
-            # Stack images to form 3D volumes (slices, height, width)
             mri_volume = np.stack(mri_images, axis=0)
             seg_volume = np.stack(seg_images, axis=0)
             st.write("MRI Volume shape:", mri_volume.shape)
             st.write("Segmentation Volume shape:", seg_volume.shape)
-            
-            # Set intensity limits based on percentiles (for a better contrast)
-            mri_isomin = np.percentile(mri_volume, 5)
-            mri_isomax = np.percentile(mri_volume, 95)
-            seg_isomin = np.percentile(seg_volume, 5)
-            seg_isomax = np.percentile(seg_volume, 95)
-            
-            # Create a 3D volume plot for the MRI volume.
+            st.write("MRI Volume Intensity Range:", np.min(mri_volume), np.max(mri_volume))
+            st.write("Segmentation Volume Intensity Range:", np.min(seg_volume), np.max(seg_volume))
+            # Create 3D volume plots directly using the 3D arrays.
             fig_mri = go.Figure(data=go.Volume(
                 value=mri_volume,
-                isomin=mri_isomin,
-                isomax=mri_isomax,
-                opacity=0.3,            # increased opacity for better visibility
-                surface_count=20,
+                isomin=np.percentile(mri_volume, 5),
+                isomax=np.percentile(mri_volume, 95),
+                opacity=0.1,
+                surface_count=15,
                 colorscale='gray'
             ))
             st.plotly_chart(fig_mri, use_container_width=True)
-            
-            # Create a 3D volume plot for the segmentation volume.
             fig_seg = go.Figure(data=go.Volume(
                 value=seg_volume,
-                isomin=seg_isomin,
-                isomax=seg_isomax,
-                opacity=0.4,            # a bit higher for the segmentation
-                surface_count=20,
+                isomin=np.percentile(seg_volume, 5),
+                isomax=np.percentile(seg_volume, 95),
+                opacity=0.2,
+                surface_count=15,
                 colorscale='Viridis'
             ))
             st.plotly_chart(fig_seg, use_container_width=True)
