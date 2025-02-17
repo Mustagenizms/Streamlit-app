@@ -244,7 +244,9 @@ def main():
         st.write("Prediction shape:", pred.shape)
         squeezed = np.squeeze(pred)
         st.write("Squeezed shape:", squeezed.shape)
-        score = float(squeezed[0])
+
+        # Use .item() to extract the Python scalar from the NumPy scalar
+        score = squeezed.item()
         st.write("Score:", score)
 
         # Classification
