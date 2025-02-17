@@ -1,0 +1,27 @@
+Quantitative Measurements:
+• Compute and display lesion metrics such as area, volume (if 3D data is available), and shape features (e.g., perimeter, compactness).
+• This can help clinicians track changes over time.
+
+Confidence Scores & Uncertainty Estimates:
+• Display additional model confidence metrics (e.g., probability distributions, heatmaps) so doctors can gauge the reliability of predictions.
+• Consider using methods like Monte Carlo dropout to estimate uncertainty.
+
+Manual Correction/Annotation Tools:
+• Allow users to manually edit or refine the segmentation overlay using drawing or annotation tools.
+• This creates a semi-automated workflow where the model provides an initial estimate that can be corrected.
+
+Report Generation:
+• Automatically generate a report that includes the original scan, segmentation outline, quantitative metrics, and confidence scores.
+• The report could be downloadable as a PDF or integrated into hospital records.
+
+Multi-Slice/3D Visualization:
+• If you have volumetric data, provide a way to scroll through slices or visualize the segmentation in 3D.
+• This adds context for complex lesions that span multiple slices.
+
+User Feedback & Audit Trail:
+• Incorporate a mechanism for clinicians to provide feedback on the segmentation accuracy, which can help refine the model over time.
+• An audit trail or log of adjustments could improve traceability.
+
+Integration with Existing Clinical Workflows:
+• Consider how the app might integrate with existing Electronic Health Record (EHR) or PACS systems.
+• For example, allow export of results in standardized formats (like DICOM-SEG or HL7).
