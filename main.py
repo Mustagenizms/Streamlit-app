@@ -323,50 +323,57 @@ def main():
         else:
             st.warning("No Flair/Lesion detected. Segmentation skipped.")
 
-# Use accept_multiple_files to allow folder-like uploads.
-uploaded_files = st.file_uploader("Upload MRI slices and segmentation masks", type=["png", "jpg", "jpeg", "tif"], accept_multiple_files=True)
 
-if uploaded_files:
-    # Sort files by name (assumes filenames are ordered correctly)
-    files = sorted(uploaded_files, key=lambda f: f.name)
+st.write("Upload a .zip file containing your MRI slices and segmentation masks in order (alternating between the MRI slice and its segmentation mask, from bottom to top).")
+
+# Allow user to upload a zip file.
+uploaded_zip = st.file_uploader("Upload folder as zip", type=["zip"])
+
+if uploaded_zip is not None:
+    # Read the zip file in memory.
+    zip_bytes = uploaded_zip.read()
+    zip_file = zipfile.ZipFile(io.BytesIO(zip_bytes), 'r')
     
-    # Separate slices and masks assuming alternating order:
+    # Get list of file names and sort them (adjust sorting as needed)
+    file_list = sorted([f for f in zip_file.namelist() if not f.endswith('/')])
+    
     mri_slices = []
     seg_slices = []
-    for idx, file in enumerate(files):
-        img = Image.open(file)
-        # Convert to grayscale for simplicity (adjust if needed)
+    
+    for idx, file_name in enumerate(file_list):
+        file_data = zip_file.read(file_name)
+        img = Image.open(io.BytesIO(file_data))
+        # Convert image to grayscale for consistency.
         img_gray = np.array(img.convert("L"))
         if idx % 2 == 0:
             mri_slices.append(img_gray)
         else:
-            # For the segmentation mask, binarize it (assuming nonzero indicates tumor)
+            # For segmentation masks, apply a threshold to binarize.
             seg_mask = (np.array(img.convert("L")) > 127).astype(np.uint8)
             seg_slices.append(seg_mask)
     
     if len(mri_slices) == 0 or len(seg_slices) == 0:
-        st.error("Please ensure that your files include both MRI slices and corresponding segmentation masks in alternating order.")
+        st.error("Ensure your zip file includes both MRI slices and corresponding segmentation masks in alternating order.")
     else:
-        # Stack slices to form 3D volumes.
-        # Volume dimensions: (num_slices, height, width)
+        # Stack slices to create 3D volumes.
         volume_mri = np.stack(mri_slices, axis=0)
         volume_seg = np.stack(seg_slices, axis=0)
         
-        # Create a 3D volume visualization using Plotly
+        # Create a 3D volume visualization using Plotly.
         fig = go.Figure()
 
-        # Add the MRI volume (grayscale) with lower opacity.
+        # MRI volume: rendered in grayscale with lower opacity.
         fig.add_trace(go.Volume(
             value=volume_mri,
-            opacity=0.1,  # Adjust opacity as needed
-            isomin=50,    # Adjust threshold values based on your data
+            opacity=0.1,
+            isomin=50,
             isomax=255,
             surface_count=20,
             colorscale='Gray',
             name='MRI Volume'
         ))
 
-        # Add the segmentation volume (binary mask) as an overlay.
+        # Segmentation volume: binary mask overlay in red.
         fig.add_trace(go.Volume(
             value=volume_seg,
             opacity=0.3,
@@ -376,6 +383,17 @@ if uploaded_files:
             colorscale=[[0, 'red'], [1, 'red']],
             name='Tumor Segmentation'
         ))
+
+        fig.update_layout(
+            title="3D Visualization of MRI Scan and Segmented Tumor",
+            scene=dict(
+                xaxis_title='Width',
+                yaxis_title='Height',
+                zaxis_title='Slice'
+            )
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
 if __name__ == "__main__":
     main()
