@@ -9,37 +9,6 @@ import zipfile
 import plotly.graph_objects as go
 from page1 import page1_app
 
-# --------------------------
-# Pages setup
-#---------------------------
-
-def main():
-    st.title("MRI Segmentácia")
-
-    # Initialize the page state
-    if 'page' not in st.session_state:
-        st.session_state.page = "home"
-
-    # Navigation buttons
-    if st.session_state.page != "home":
-        if st.button("Go Home"):
-            st.session_state.page = "home"
-
-    if st.session_state.page == "home":
-        st.subheader("Home Page")
-        if st.button("Go to Page 1"):
-            st.session_state.page = "page1"
-        if st.button("Go to Page 2"):
-            st.session_state.page = "page2"
-
-    elif st.session_state.page == "page1":
-        page1_app()
-
-    elif st.session_state.page == "page2":
-        page2_app()
-
-if __name__ == "__main__":
-    main()
 
 # --------------------------
 # Set Page Configuration
