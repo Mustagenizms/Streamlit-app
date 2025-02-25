@@ -332,7 +332,7 @@ def plot_3d_data_app():
 # ============================
 def main():
     st.title("MRI Segmentácia")
-    tab1 = st.tabs(["Single Scan"])
+    tab1, = st.tabs(["Single Scan"])
     with tab1:
         single_scan_app()
 
