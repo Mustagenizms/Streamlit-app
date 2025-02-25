@@ -203,7 +203,7 @@ def plot_color_slices(volume, title="Volume Slices"):
 # ============================
 def single_scan_app():
     st.header("Single Scan Segmentation")
-    uploaded_file = st.file_uploader("Upload an MRI scan (png/jpg/tif)", type=["png", "jpg", "jpeg", "tif"], key="single_scan")
+    uploaded_file = st.file_uploader("Upload an MRI scan (tif)", type=["tif"], key="single_scan")
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
         img_array = preprocess_image(image)
