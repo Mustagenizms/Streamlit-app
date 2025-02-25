@@ -16,40 +16,83 @@ st.set_page_config(page_title="MRI Classification, Segmentation, & 3D Visualizat
 # --------------------------
 # Custom CSS for Styling
 # --------------------------
+# Apply custom CSS for styling
 st.markdown(
     """
     <style>
-    body { background-color: #ffffff; color: black; }
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        background-color: #ffffff;
+        color: black;
+    }
     .sticky-header {
-        position: sticky; top: 0; z-index: 1000;
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 10px 20px; background-color: white;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+        background-color: white;
         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     }
-    .sticky-header .logo { font-size: 24px; font-weight: bold; color: #007bff; }
-    .sticky-header .header-buttons { display: flex; gap: 10px; }
+    .sticky-header .logo {
+        font-size: 24px;
+        font-weight: bold;
+        color: #007bff;
+    }
+    .sticky-header .header-buttons {
+        display: flex;
+        gap: 10px;
+    }
     .sticky-header .header-buttons button {
-        background-color: #007bff; color: white; font-size: 16px;
-        padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        font-size: 16px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
     }
-    .sticky-header .header-buttons button:hover { background-color: #0056b3; }
-    .main-content { margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
-    .main-content h1 { font-size: 32px; margin: 0; }
+    .sticky-header .header-buttons button:hover {
+        background-color: #0056b3;
+    }
+    .main-content {
+        margin: 20px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-left: 50px;
+    }
+    .main-content h1 {
+        font-size: 32px;
+        margin: 0;
+    }
     .upload-button {
-        background-color: #007bff; color: white; font-size: 16px;
-        padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
+        background-color: #323D84;
+        color: white;
+        font-size: 20px;
+        font-weight: 800;
+        padding: 25px 35px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        margin-right: 50px;
     }
-    .upload-button:hover { background-color: #0056b3; }
-    .content { background-color: #C3E5FF; }
+    .upload-button:hover {
+        background-color: #0056b3;
+    }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# --------------------------
-# Sticky Header HTML
-# --------------------------
-st.markdown(
+# Sticky Header
+st.markdown(    
     """
     <div class="sticky-header">
         <div class="logo">Logo</div>
@@ -64,8 +107,10 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+# Space between header and main content
+st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
 
+# Main content
 st.markdown(
     """
     <div class="main-content">
@@ -76,17 +121,101 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
+
+# Space after main content
 st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
 
 st.markdown(
     """
-    <div class="content">
-        <ul>
-            <a class="content-1"><li>About</li></a>
-            <a class="content-2"><li>Contact</li></a>
-            <a class="content-3"><li>Other Info</li></a>
-            <a class="content-4"><li>More</li></a>
-        </ul>
+    <style>
+        .content {
+            background-color: transparent;
+            box-shadow: 0px -4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .content h2 {
+            font-size: 28px;
+            margin: 0;
+            padding: 20px;
+        }
+        .content hr {
+            width: 80%;
+            margin-top: 0;
+            margin-left: 20px;
+        }
+        .content h3 {
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 600;
+            background-color: #007bff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .content p {
+            font-size: 16px;
+            margin-left: 20px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <section class="content">
+        <div>
+            <h3>Symptómy</h3>
+            <hr>
+            <p>Nádory mozgu môžu spôsobiť rôzne príznaky v závislosti od ich veľkosti a umiestnenia.<br>
+            <br>
+            <strong>Bolesť hlavy</strong>
+            Pretrvávajúca bolesť hlavy, ktorá sa zhoršuje ráno alebo pri kašľaní, môže byť príznakom.<br>
+            <strong>Záchvaty</strong>
+            Náhle záchvaty, najmä u ľudí bez predchádzajúcej histórie, môžu signalizovať prítomnosť nádoru.<br>
+            <strong>Problémy so zrakom alebo sluchom</strong>
+            Zmeny v zraku alebo počutí môžu byť spôsobené nádorom, ktorý tlačí na nervy.<br>
+            <strong>Zmeny osobnosti alebo kognície</strong>
+            Strata pamäti, zmätok alebo zmeny v správaní sú tiež možné príznaky.<br>
+            <br>
+            Ak si všimnete tieto príznaky, je dôležité vyhľadať lekársku pomoc.</p>
+        </div>
+        <br>
+        <div>
+            <h3>Liečba</h3>
+            <hr>
+            <p>Liečba nádorov mozgu závisí od typu nádoru, jeho veľkosti, umiestnenia a štádia. Najčastejšie možnosti zahŕňajú chirurgické odstránenie nádoru, ak je to možné, čo môže byť doplnené o ožarovanie alebo chemoterapiu na zničenie zvyškov nádorových buniek. V niektorých prípadoch sa používajú cielené terapie alebo imunoterapia na zameranie sa na konkrétne nádorové bunky. Možnosti liečby sa líšia v závislosti od individuálnych potrieb pacienta, preto je dôležité konzultovať s odborníkmi na liečbu mozgových nádorov.</p>
+        </div>
+        <div>
+            <h3>Prevencia nádorov mozgu</h3>
+            <hr>
+            <p>Prevencia nádorov mozgu nie je úplne možná, no existujú niektoré faktory, ktoré môžu ovplyvniť riziko ich vzniku. Medzi rizikové faktory patrí genetická predispozícia, ako aj rodinná história nádorov mozgu. V niektorých prípadoch môžu byť nádorové ochorenia spôsobené aj vystavením určitým chemikáliám alebo žiareniu. Aj keď nie je možné úplne predísť vzniku nádoru, udržiavanie zdravého životného štýlu, ako je vyvážená strava, pravidelný pohyb a minimalizácia vystavenia škodlivým látkam, môže pomôcť znížiť niektoré rizikové faktory.</p>
+        </div>
+    </section>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <style>
+        .footer {
+            background-color: #fffff;
+            box-shadow: 0px -4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            padding-bottom: 0;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <div class="footer">
+        <p>copyright & contact info</p>
     </div>
     """,
     unsafe_allow_html=True
