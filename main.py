@@ -332,6 +332,20 @@ def plot_3d_data_app():
 # ============================
 def main():
     st.title("MRI Segmentácia")
+
+    # Add custom CSS for padding
+    st.markdown(
+        """
+        <style>
+        .streamlit-tabs div[role="tablist"] > div {
+            padding-left: 40px;
+            padding-right: 40px;
+        }
+        </style>
+        """, 
+        unsafe_allow_html=True
+    )
+    
     tab1, = st.tabs(["Single Scan"])
     with tab1:
         single_scan_app()
