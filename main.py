@@ -97,10 +97,10 @@ st.markdown(
     <div class="sticky-header">
         <div class="logo">Logo</div>
         <div class="header-buttons">
-            <button>Home</button>
-            <button>About</button>
-            <button>Contact</button>
-            <button>Settings</button>
+            <button>Domov</button>
+            <button>Segmentácia</button>
+            <button>Kontakt</button>
+            <button>O nás</button>
         </div>
     </div>
     """,
@@ -332,11 +332,9 @@ def plot_3d_data_app():
 # ============================
 def main():
     st.title("MRI Segmentácia")
-    tab1, tab2 = st.tabs(["Single Scan", "3D Data Plotter"])
+    tab1 = st.tabs(["Single Scan"])
     with tab1:
         single_scan_app()
-    with tab2:
-        plot_3d_data_app()
 
 # Load global models once
 clf_model = load_classification_model()
