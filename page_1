@@ -1,0 +1,7 @@
+import streamlit as st
+
+def page1_app():
+    st.subheader("Page 1")
+    st.write("This is the content of Page 1.")
+    if st.button("Go to Page 2"):
+        st.session_state.page = "page
