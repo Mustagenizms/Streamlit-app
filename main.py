@@ -107,6 +107,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
+
 #//////////////////////////////////////////////////////////
 
 
@@ -346,9 +348,6 @@ if __name__ == "__main__":
 
 
 #//////////////////////////////////////////////////////////
-
-# Space between header and main content
-st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
 
 # Main content
 
