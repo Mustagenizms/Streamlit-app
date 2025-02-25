@@ -7,7 +7,6 @@ import cv2  # OpenCV for contour extraction
 from io import BytesIO
 import zipfile
 import plotly.graph_objects as go
-from page1 import page1_app
 
 
 # --------------------------
