@@ -110,6 +110,24 @@ st.markdown(
 # Space between header and main content
 st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
 
+# ============================
+# Main App with Tabs
+# ============================
+def main():
+    st.title("MRI Classification, Segmentation, & 3D Visualization")
+    tab1, tab2 = st.tabs(["Single Scan", "3D Data Plotter"])
+    with tab1:
+        single_scan_app()
+    with tab2:
+        plot_3d_data_app()
+
+# Load global models once
+clf_model = load_classification_model()
+seg_model = load_segmentation_model()
+
+if __name__ == "__main__":
+    main()
+
 # Main content
 st.markdown(
     """
