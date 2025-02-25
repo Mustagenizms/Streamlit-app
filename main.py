@@ -351,15 +351,6 @@ if __name__ == "__main__":
 st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
 
 # Main content
-st.markdown(
-    """
-    <div class="main-content">
-        <h1>AI Tumor Detector</h1>
-        <button class="upload-button">Upload Scan</button>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
 st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
 
