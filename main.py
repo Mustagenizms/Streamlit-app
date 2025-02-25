@@ -93,22 +93,22 @@ st.markdown(
 )
 
 # Sticky Header
-st.markdown(    
-    """
-    <div class="sticky-header">
-        <div class="logo">Logo</div>
-        <div class="header-buttons">
-            <button>Domov</button>
-            <button>Segmentácia</button>
-            <button>Kontakt</button>
-            <button>O nás</button>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# st.markdown(    
+#     """
+#     <div class="sticky-header">
+#         <div class="logo">Logo</div>
+#         <div class="header-buttons">
+#             <button>Domov</button>
+#             <button>Segmentácia</button>
+#             <button>Kontakt</button>
+#             <button>O nás</button>
+#         </div>
+#     </div>
+#     """,
+#     unsafe_allow_html=True
+# )
 
-st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
+# st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
 
 #//////////////////////////////////////////////////////////
 
