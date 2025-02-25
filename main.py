@@ -107,137 +107,8 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Space between header and main content
-st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
+#//////////////////////////////////////////////////////////
 
-# ============================
-# Main App with Tabs
-# ============================
-def main():
-    st.title("MRI Classification, Segmentation, & 3D Visualization")
-    tab1, tab2 = st.tabs(["Single Scan", "3D Data Plotter"])
-    with tab1:
-        single_scan_app()
-    with tab2:
-        plot_3d_data_app()
-
-# Load global models once
-clf_model = load_classification_model()
-seg_model = load_segmentation_model()
-
-if __name__ == "__main__":
-    main()
-
-# Main content
-st.markdown(
-    """
-    <div class="main-content">
-        <h1>AI Tumor Detector</h1>
-        <button class="upload-button">Upload Scan</button>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
-
-# Space after main content
-st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-
-st.markdown(
-    """
-    <style>
-        .content {
-            background-color: transparent;
-            box-shadow: 0px -4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-        .content h2 {
-            font-size: 28px;
-            margin: 0;
-            padding: 20px;
-        }
-        .content hr {
-            width: 80%;
-            margin-top: 0;
-            margin-left: 20px;
-        }
-        .content h3 {
-            color: #ffffff;
-            font-size: 22px;
-            font-weight: 600;
-            background-color: #007bff;
-            padding: 10px 20px;
-            border-radius: 8px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .content p {
-            font-size: 16px;
-            margin-left: 20px;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    """
-    <section class="content">
-        <div>
-            <h3>Symptómy</h3>
-            <hr>
-            <p>Nádory mozgu môžu spôsobiť rôzne príznaky v závislosti od ich veľkosti a umiestnenia.<br>
-            <br>
-            <strong>Bolesť hlavy</strong>
-            Pretrvávajúca bolesť hlavy, ktorá sa zhoršuje ráno alebo pri kašľaní, môže byť príznakom.<br>
-            <strong>Záchvaty</strong>
-            Náhle záchvaty, najmä u ľudí bez predchádzajúcej histórie, môžu signalizovať prítomnosť nádoru.<br>
-            <strong>Problémy so zrakom alebo sluchom</strong>
-            Zmeny v zraku alebo počutí môžu byť spôsobené nádorom, ktorý tlačí na nervy.<br>
-            <strong>Zmeny osobnosti alebo kognície</strong>
-            Strata pamäti, zmätok alebo zmeny v správaní sú tiež možné príznaky.<br>
-            <br>
-            Ak si všimnete tieto príznaky, je dôležité vyhľadať lekársku pomoc.</p>
-        </div>
-        <br>
-        <div>
-            <h3>Liečba</h3>
-            <hr>
-            <p>Liečba nádorov mozgu závisí od typu nádoru, jeho veľkosti, umiestnenia a štádia. Najčastejšie možnosti zahŕňajú chirurgické odstránenie nádoru, ak je to možné, čo môže byť doplnené o ožarovanie alebo chemoterapiu na zničenie zvyškov nádorových buniek. V niektorých prípadoch sa používajú cielené terapie alebo imunoterapia na zameranie sa na konkrétne nádorové bunky. Možnosti liečby sa líšia v závislosti od individuálnych potrieb pacienta, preto je dôležité konzultovať s odborníkmi na liečbu mozgových nádorov.</p>
-        </div>
-        <div>
-            <h3>Prevencia nádorov mozgu</h3>
-            <hr>
-            <p>Prevencia nádorov mozgu nie je úplne možná, no existujú niektoré faktory, ktoré môžu ovplyvniť riziko ich vzniku. Medzi rizikové faktory patrí genetická predispozícia, ako aj rodinná história nádorov mozgu. V niektorých prípadoch môžu byť nádorové ochorenia spôsobené aj vystavením určitým chemikáliám alebo žiareniu. Aj keď nie je možné úplne predísť vzniku nádoru, udržiavanie zdravého životného štýlu, ako je vyvážená strava, pravidelný pohyb a minimalizácia vystavenia škodlivým látkam, môže pomôcť znížiť niektoré rizikové faktory.</p>
-        </div>
-    </section>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    """
-    <style>
-        .footer {
-            background-color: #fffff;
-            box-shadow: 0px -4px 6px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            text-align: center;
-            padding-bottom: 0;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    """
-    <div class="footer">
-        <p>copyright & contact info</p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
 
 # ============================
 # Custom Metric Functions
@@ -472,3 +343,122 @@ seg_model = load_segmentation_model()
 
 if __name__ == "__main__":
     main()
+
+
+#//////////////////////////////////////////////////////////
+
+# Space between header and main content
+st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
+
+# Main content
+st.markdown(
+    """
+    <div class="main-content">
+        <h1>AI Tumor Detector</h1>
+        <button class="upload-button">Upload Scan</button>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
+
+# Space after main content
+st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+
+st.markdown(
+    """
+    <style>
+        .content {
+            background-color: transparent;
+            box-shadow: 0px -4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        .content h2 {
+            font-size: 28px;
+            margin: 0;
+            padding: 20px;
+        }
+        .content hr {
+            width: 80%;
+            margin-top: 0;
+            margin-left: 20px;
+        }
+        .content h3 {
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 600;
+            background-color: #007bff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .content p {
+            font-size: 16px;
+            margin-left: 20px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <section class="content">
+        <div>
+            <h3>Symptómy</h3>
+            <hr>
+            <p>Nádory mozgu môžu spôsobiť rôzne príznaky v závislosti od ich veľkosti a umiestnenia.<br>
+            <br>
+            <strong>Bolesť hlavy</strong>
+            Pretrvávajúca bolesť hlavy, ktorá sa zhoršuje ráno alebo pri kašľaní, môže byť príznakom.<br>
+            <strong>Záchvaty</strong>
+            Náhle záchvaty, najmä u ľudí bez predchádzajúcej histórie, môžu signalizovať prítomnosť nádoru.<br>
+            <strong>Problémy so zrakom alebo sluchom</strong>
+            Zmeny v zraku alebo počutí môžu byť spôsobené nádorom, ktorý tlačí na nervy.<br>
+            <strong>Zmeny osobnosti alebo kognície</strong>
+            Strata pamäti, zmätok alebo zmeny v správaní sú tiež možné príznaky.<br>
+            <br>
+            Ak si všimnete tieto príznaky, je dôležité vyhľadať lekársku pomoc.</p>
+        </div>
+        <br>
+        <div>
+            <h3>Liečba</h3>
+            <hr>
+            <p>Liečba nádorov mozgu závisí od typu nádoru, jeho veľkosti, umiestnenia a štádia. Najčastejšie možnosti zahŕňajú chirurgické odstránenie nádoru, ak je to možné, čo môže byť doplnené o ožarovanie alebo chemoterapiu na zničenie zvyškov nádorových buniek. V niektorých prípadoch sa používajú cielené terapie alebo imunoterapia na zameranie sa na konkrétne nádorové bunky. Možnosti liečby sa líšia v závislosti od individuálnych potrieb pacienta, preto je dôležité konzultovať s odborníkmi na liečbu mozgových nádorov.</p>
+        </div>
+        <div>
+            <h3>Prevencia nádorov mozgu</h3>
+            <hr>
+            <p>Prevencia nádorov mozgu nie je úplne možná, no existujú niektoré faktory, ktoré môžu ovplyvniť riziko ich vzniku. Medzi rizikové faktory patrí genetická predispozícia, ako aj rodinná história nádorov mozgu. V niektorých prípadoch môžu byť nádorové ochorenia spôsobené aj vystavením určitým chemikáliám alebo žiareniu. Aj keď nie je možné úplne predísť vzniku nádoru, udržiavanie zdravého životného štýlu, ako je vyvážená strava, pravidelný pohyb a minimalizácia vystavenia škodlivým látkam, môže pomôcť znížiť niektoré rizikové faktory.</p>
+        </div>
+    </section>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <style>
+        .footer {
+            background-color: #fffff;
+            box-shadow: 0px -4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            padding-bottom: 0;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <div class="footer">
+        <p>copyright & contact info</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
