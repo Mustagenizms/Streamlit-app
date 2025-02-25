@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 # --------------------------
 # Set Page Configuration
 # --------------------------
-st.set_page_config(page_title="MRI Classification, Segmentation, & 3D Visualization", page_icon="🌍", layout="wide")
+st.set_page_config(page_title="MRI Segmentácia", page_icon="🌍", layout="wide")
 
 # --------------------------
 # Custom CSS for Styling
@@ -222,7 +222,6 @@ def plot_color_slices(volume, title="Volume Slices"):
 # Single Scan App
 # ============================
 def single_scan_app():
-    st.header("Single Scan Segmentation")
     uploaded_file = st.file_uploader("Upload an MRI scan (png/jpg/tif)", type=["png", "jpg", "jpeg", "tif"], key="single_scan")
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
@@ -332,7 +331,7 @@ def plot_3d_data_app():
 # Main App with Tabs
 # ============================
 def main():
-    st.title("MRI Classification, Segmentation, & 3D Visualization")
+    st.title("MRI Segmentácia")
     tab1, tab2 = st.tabs(["Single Scan", "3D Data Plotter"])
     with tab1:
         single_scan_app()
