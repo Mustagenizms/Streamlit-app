@@ -9,15 +9,10 @@ import zipfile
 import plotly.graph_objects as go
 
 
-# --------------------------
-# Set Page Configuration
-# --------------------------
+
 st.set_page_config(page_title="MRI Segmentácia", page_icon="🌍", layout="wide")
 
-# --------------------------
-# Custom CSS for Styling
-# --------------------------
-# Apply custom CSS for styling
+
 st.markdown(
     """
     <style>
@@ -110,12 +105,7 @@ st.markdown(
 
 # st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
 
-#//////////////////////////////////////////////////////////
 
-
-# ============================
-# Custom Metric Functions
-# ============================
 @tf.keras.utils.register_keras_serializable()
 def dice_coef(y_true, y_pred, smooth=1e-6):
     y_true_f = tf.reshape(y_true, [-1])
@@ -134,9 +124,7 @@ def iou_coef(y_true, y_pred, smooth=1e-6):
 tf.keras.utils.get_custom_objects()["dice_coef"] = dice_coef
 tf.keras.utils.get_custom_objects()["iou_coef"] = iou_coef
 
-# ============================
-# Model Loading Functions (Cached)
-# ============================
+
 @st.cache_resource
 def load_classification_model():
     return load_model("Models/classifier_model1.h5", custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef})
@@ -145,9 +133,7 @@ def load_classification_model():
 def load_segmentation_model():
     return load_model("Models/segmentation_model.keras", custom_objects={"dice_coef": dice_coef, "iou_coef": iou_coef})
 
-# ============================
-# Preprocessing & Helper Functions
-# ============================
+
 def preprocess_image(image: Image.Image, target_size=(256, 256)) -> np.ndarray:
     image = image.convert("RGB").resize(target_size)
     img_array = np.array(image, dtype=np.float32) / 255.0
@@ -219,9 +205,7 @@ def plot_color_slices(volume, title="Volume Slices"):
     )
     fig.frames = frames
     return fig
-# ============================
-# Single Scan App
-# ============================
+
 def single_scan_app():
     st.header("Single Scan Segmentation")
     uploaded_file = st.file_uploader("Upload an MRI scan (png/jpg/tif)", type=["png", "jpg", "jpeg", "tif"], key="single_scan")
@@ -257,9 +241,6 @@ def single_scan_app():
         else:
             st.warning("No Flair/Lesion detected. Segmentation skipped.")
 
-# ============================
-# 3D Data Plotter App
-# ============================
 def plot_3d_data_app():
     st.header("3D Data Plotter")
     uploaded_zip = st.file_uploader("Upload ZIP with images in strict order: MRI0, Mask0, MRI1, Mask1, etc.", 
@@ -267,7 +248,6 @@ def plot_3d_data_app():
     if uploaded_zip is not None:
         with zipfile.ZipFile(uploaded_zip, "r") as z:
             file_list = sorted([f for f in z.namelist() if not f.endswith("/")])
-            # Must be an even number of files: [MRI0, Mask0, MRI1, Mask1, ...]
             if len(file_list) % 2 != 0:
                 st.error("Expected an even number of files (MRI, mask, MRI, mask...).")
                 return
@@ -275,25 +255,20 @@ def plot_3d_data_app():
             mri_images = []
             seg_images = []
             
-            # Read images in the order: MRI, Mask, MRI, Mask...
             for i, fname in enumerate(file_list):
                 with z.open(fname) as f:
-                    # Keep color
                     img = Image.open(f).convert("RGB")
-                    arr = np.array(img)  # shape (H, W, 3)
+                    arr = np.array(img)  
                     
-                    # If i is even -> MRI; if i is odd -> mask
                     if i % 2 == 0:
                         mri_images.append(arr)
                     else:
                         seg_images.append(arr)
             
-            # Print out all masks first
             st.subheader("All Masks in Order")
             for i, mask_arr in enumerate(seg_images):
                 st.image(mask_arr, caption=f"Mask {i}", use_column_width=True)
             
-            # Then print out all MRIs
             st.subheader("All MRI Scans in Order")
             for i, mri_arr in enumerate(mri_images):
                 st.image(mri_arr, caption=f"MRI {i}", use_column_width=True)
@@ -302,26 +277,21 @@ def plot_3d_data_app():
                 st.error("No images found in the ZIP.")
                 return
             
-            # Build 3D volumes in slice order. 
-            # We'll assume #slices = len(mri_images). 
-            # shape = (num_slices, H, W, 3)
+          
             mri_volume = np.stack(mri_images, axis=0)
             seg_volume = np.stack(seg_images, axis=0)
             
             st.write("MRI Volume shape:", mri_volume.shape)
             st.write("Mask Volume shape:", seg_volume.shape)
-            
-            # Convert each slice to grayscale for 3D plane slicing
-            # shape after conversion: (num_slices, H, W)
+
             mri_gray_list = []
             seg_gray_list = []
             for i in range(mri_volume.shape[0]):
                 mri_gray_list.append(rgb_to_grayscale(mri_volume[i]))
                 seg_gray_list.append(rgb_to_grayscale(seg_volume[i]))
-            mri_gray_3d = np.stack(mri_gray_list, axis=0)  # shape (num_slices, H, W)
-            seg_gray_3d = np.stack(seg_gray_list, axis=0)  # shape (num_slices, H, W)
+            mri_gray_3d = np.stack(mri_gray_list, axis=0)  
+            seg_gray_3d = np.stack(seg_gray_list, axis=0) 
             
-            # Now create the 3D slicing scene
             fig_mri = plot_3d_slicing(mri_gray_3d, title="MRI in 3D Slicing")
             st.plotly_chart(fig_mri, use_container_width=True)
             
@@ -329,16 +299,13 @@ def plot_3d_data_app():
             st.plotly_chart(fig_seg, use_container_width=True)
 
 
-# ============================
-# Main App with Tabs
-# ============================
+
 def main():
     st.title("MRI Segmentácia")
     tab1, = st.tabs(["Single Scan"])
     with tab1:
         single_scan_app()
 
-# Load global models once
 clf_model = load_classification_model()
 seg_model = load_segmentation_model()
 
@@ -346,13 +313,10 @@ if __name__ == "__main__":
     main()
 
 
-#//////////////////////////////////////////////////////////
 
-# Main content
 
 st.markdown("<div style='height: 100px;'></div>", unsafe_allow_html=True)
 
-# Space after main content
 st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
 
 st.markdown(
